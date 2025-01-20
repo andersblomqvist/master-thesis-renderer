@@ -25,6 +25,10 @@
 
 # Visual Studio cache directory
 .vs/
+.vscode/
+*.code-workspace
+*.nvdb
+*.nvdb.meta
 
 # Gradle cache directory
 .gradle/

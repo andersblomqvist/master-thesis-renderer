@@ -9,11 +9,18 @@ public class NanoVolumeSettings : MonoBehaviour
     public Slider RaymarchSamples;
     public Slider Density;
 
+    public bool TemporalFiltering;
+
     private NanoVolumeLoader loader;
 
     void Start()
     {
         loader = GetComponent<NanoVolumeLoader>();
         VDBName.text = loader.volumePath;
+    }
+
+    public void ToggleTemporalFiltering()
+    {
+        TemporalFiltering = !TemporalFiltering;
     }
 }

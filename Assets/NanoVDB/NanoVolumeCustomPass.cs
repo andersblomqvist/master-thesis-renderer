@@ -106,9 +106,10 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetFloat("_ClipPlaneMax", 1500.0f);
 
         mat.SetVector("_LightDir", nanoVolumeSettings.Sun.transform.forward);
-        mat.SetVector("_Light", nanoVolumeSettings.Sun.color);
         mat.SetFloat("_Density", nanoVolumeSettings.Density.value);
 
         mat.SetInt("_RayMarchSamples", (int)nanoVolumeSettings.RaymarchSamples.value);
+
+        Debug.DrawRay(nanoVolumeSettings.Sun.transform.position, nanoVolumeSettings.Sun.transform.forward * 300.0f, Color.blue);
     }
 }

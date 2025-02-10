@@ -15,9 +15,7 @@
 
 uniform pnanovdb_buf_t buf : register(t1);
 
-uniform float4	_LightDir;  // directionalLight.transform.forward
-
-uniform float3	_Light;
+uniform float3	_LightDir;  // directionalLight.transform.forward
 
 uniform float	_LightRayLength;
 uniform float	_ClipPlaneMin;
@@ -92,7 +90,7 @@ void get_participating_media(out float sigmaS, out float sigmaE, float3 pos, ino
 
 float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float3 view_dir)
 {
-	float light_dir = -(_LightDir.xyz);
+	float3 light_dir = -(_LightDir.xyz);
 
 	float shadow = 1;
 	float sigmaS = 0.0;
@@ -124,7 +122,7 @@ float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float3 view_dir
 // Exp step with random offset (jitter)
 float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc, float3 view_dir)
 {
-	float light_dir = -(_LightDir.xyz);
+	float3 light_dir = -(_LightDir.xyz);
 
 	float shadow = 1.0;
 	float sigmaS = 0.0;

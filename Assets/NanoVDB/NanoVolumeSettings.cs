@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class NanoVolumeSettings : MonoBehaviour
@@ -10,6 +11,9 @@ public class NanoVolumeSettings : MonoBehaviour
     public Slider Density;
 
     public bool TemporalFiltering;
+
+    [Header("Noise Types")]
+    public Texture2DArray STBN;
 
     private NanoVolumeLoader loader;
 

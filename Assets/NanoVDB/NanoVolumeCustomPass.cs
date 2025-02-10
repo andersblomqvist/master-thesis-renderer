@@ -6,8 +6,10 @@ using UnityEngine.Experimental.Rendering;
 class NanoVolumeCustomPass : CustomPass
 {
     const int NANO_VOLUME_PASS_ID       = 0;
-    const int TEMPORAL_FILTER_PASS_ID    = 1;
+    const int TEMPORAL_FILTER_PASS_ID   = 1;
     const int COPY_HISTORY_PASS_ID      = 2;
+
+    const int MAX_FRAME_COUNT = 64;
 
     public NanoVolumeLoader     nanoVolumeLoaderComponent;
     public NanoVolumeSettings   nanoVolumeSettings;
@@ -23,11 +25,13 @@ class NanoVolumeCustomPass : CustomPass
     RTHandle frameHistory;
     RTHandle finalFrame;
 
+    // Frame count for sampling 3D noise textures [0, 63]
+    int frameCount = 0;
+
     protected override void Setup(ScriptableRenderContext renderContext, CommandBuffer cmd)
     {
         volumeShader = Shader.Find("FullScreen/NanoVolumePass");
         mat = CoreUtils.CreateEngineMaterial(volumeShader);
-
         
         newSample = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
@@ -65,30 +69,33 @@ class NanoVolumeCustomPass : CustomPass
         {
             CoreUtils.SetRenderTarget(ctx.cmd, ctx.cameraColorBuffer, ClearFlag.Color);
             CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
-            return;
+        }
+        else
+        {
+            // Otherwise, proceed with temporal filter instead
+            Vector4 scale = RTHandles.rtHandleProperties.rtHandleScale;
+
+            // Get new sample
+            CoreUtils.SetRenderTarget(ctx.cmd, newSample, ClearFlag.Color);
+            CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
+
+            // Apply temporal filter
+            ctx.propertyBlock.SetTexture("_NewSample", newSample);
+            ctx.propertyBlock.SetTexture("_FrameHistory", frameHistory);
+            CoreUtils.SetRenderTarget(ctx.cmd, finalFrame, ClearFlag.Color);
+            CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: TEMPORAL_FILTER_PASS_ID);
+
+            // Save final frame to history
+            ctx.propertyBlock.SetTexture("_FinalFrame", finalFrame);
+            CoreUtils.SetRenderTarget(ctx.cmd, frameHistory, ClearFlag.Color);
+            CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: COPY_HISTORY_PASS_ID);
+
+            // Blit final frame to camera
+            ctx.cmd.Blit(finalFrame, ctx.cameraColorBuffer, new Vector2(scale.x, scale.y), Vector2.zero, 0, 0);
         }
 
-        // Otherwise, proceed with temporal filter instead
-
-        Vector4 scale = RTHandles.rtHandleProperties.rtHandleScale;
-
-        // Get new sample
-        CoreUtils.SetRenderTarget(ctx.cmd, newSample, ClearFlag.Color);
-        CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
-
-        // Apply temporal filter
-        ctx.propertyBlock.SetTexture("_NewSample", newSample);
-        ctx.propertyBlock.SetTexture("_FrameHistory", frameHistory);
-        CoreUtils.SetRenderTarget(ctx.cmd, finalFrame, ClearFlag.Color);
-        CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: TEMPORAL_FILTER_PASS_ID);
-
-        // Save final frame to history
-        ctx.propertyBlock.SetTexture("_FinalFrame", finalFrame);
-        CoreUtils.SetRenderTarget(ctx.cmd, frameHistory, ClearFlag.Color);
-        CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: COPY_HISTORY_PASS_ID);
-
-        // Blit final frame to camera
-        ctx.cmd.Blit(finalFrame, ctx.cameraColorBuffer, new Vector2(scale.x, scale.y), Vector2.zero, 0, 0);
+        // Update frame count
+        frameCount = (frameCount + 1) % MAX_FRAME_COUNT;
     }
 
     protected override void Cleanup()
@@ -110,6 +117,8 @@ class NanoVolumeCustomPass : CustomPass
 
         mat.SetInt("_RayMarchSamples", (int)nanoVolumeSettings.RaymarchSamples.value);
 
-        Debug.DrawRay(nanoVolumeSettings.Sun.transform.position, nanoVolumeSettings.Sun.transform.forward * 300.0f, Color.blue);
+        // For NoiseSampler.hlsl include
+        mat.SetTexture("_STBN", nanoVolumeSettings.STBN);
+        mat.SetInteger("_Frame", frameCount);
     }
 }

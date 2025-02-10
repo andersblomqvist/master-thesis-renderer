@@ -1100,6 +1100,7 @@ MonoBehaviour:
   RaymarchSamples: {fileID: 147545065}
   Density: {fileID: 63367288}
   TemporalFiltering: 0
+  STBN: {fileID: 18700000, guid: fc7a4451254f2da42a377894f9748f01, type: 3}
 --- !u!114 &189718177
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1766,12 +1767,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 536892004}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1667473603}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &564364297
 GameObject:
@@ -2291,6 +2292,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 467534812}
+  - {fileID: 536892007}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1812347438
@@ -2820,6 +2822,5 @@ SceneRoots:
   - {fileID: 157207114}
   - {fileID: 2013410475}
   - {fileID: 1667473603}
-  - {fileID: 536892007}
   - {fileID: 189718178}
   - {fileID: 524302127}

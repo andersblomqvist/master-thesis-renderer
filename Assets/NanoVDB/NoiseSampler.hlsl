@@ -15,11 +15,33 @@ float2 get_tiled_uv(float2 uv)
     return tiled_uv;
 }
 
-float3 sample_noise(float2 uv)
+// https://www.reedbeta.com/blog/quick-and-easy-gpu-random-numbers-in-d3d11/
+uint rand_xorshift(uint seed)
+{
+    // Xorshift algorithm from George Marsaglia's paper
+    seed ^= (seed << 13);
+    seed ^= (seed >> 17);
+    seed ^= (seed << 5);
+    return seed;
+}
+
+float sample_stbn_noise(float2 uv)
 {
     float2 tiled_uv = get_tiled_uv(uv);
-    float3 noise = SAMPLE_TEXTURE2D_ARRAY(_STBN, s_linear_clamp_sampler, tiled_uv, _Frame);
-    return noise;
+    return SAMPLE_TEXTURE2D_ARRAY(
+        _STBN,
+        s_linear_clamp_sampler,
+        tiled_uv,
+        _Frame
+    ).r;
+}
+
+float sample_white_noise(float2 uv)
+{
+    uint seed = asuint(uv.x + uv.x * uv.y + uv.x * uv.y * _Frame);
+    float res = float(rand_xorshift(seed)) * (1.0 / 4294967296.0);
+    res = float(rand_xorshift(asuint(res))) * (1.0 / 4294967296.0);
+    return max(0.0, min(1.0, res));
 }
 
 #endif // NOISE_SAMPLER

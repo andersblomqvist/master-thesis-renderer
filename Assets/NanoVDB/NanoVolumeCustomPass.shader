@@ -10,7 +10,6 @@ Shader "FullScreen/NanoVolumePass"
     // Commons, includes many others
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/RenderPass/CustomPass/CustomPassCommon.hlsl"
 
-    #include "Assets/NanoVDB/PseudoRandom.hlsl"
     #include "Assets/NanoVDB/TemporalFilterPass.hlsl"
     #include "Assets/NanoVDB/NoiseSampler.hlsl"
     #include "Assets/NanoVDB/NanoVolumePass.hlsl"
@@ -20,16 +19,18 @@ Shader "FullScreen/NanoVolumePass"
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
         float depth = LoadCameraDepth(varyings.positionCS.xy);
         PositionInputs posInput = GetPositionInput(varyings.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
-        float3 viewDirection = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
         float2 scaling = _RTHandleScale.xy;
         float2 uv = posInput.positionNDC.xy * scaling;
 
-        float3 noise = sample_noise(uv);
-        return float4(noise, 1.0);
+        //float noise = sample_stbn_noise(uv);
+        //float noise = sample_white_noise(uv);
+        //return float4(noise, noise, noise, 1.0);
 
+        float3 viewDirection = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
+        
         float3 color = CustomPassSampleCameraColor(posInput.positionNDC.xy, 0);
 
-        float4 result = NanoVolumePass(_WorldSpaceCameraPos, -viewDirection);
+        float4 result = NanoVolumePass(_WorldSpaceCameraPos, -viewDirection, uv);
         float3 cloud = result.rgb;
         float alpha = result.a;
 

@@ -115,7 +115,7 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetVector("_LightDir", nanoVolumeSettings.Sun.transform.forward);
         mat.SetFloat("_Density", nanoVolumeSettings.Density.value);
 
-        mat.SetInt("_RayMarchSamples", (int)nanoVolumeSettings.RaymarchSamples.value);
+        mat.SetInt("_LightStepsSamples", (int)nanoVolumeSettings.LightStepsSamples.value);
 
         // For NoiseSampler.hlsl include
         mat.SetTexture("_STBN", nanoVolumeSettings.STBN);

@@ -2,7 +2,7 @@
 #define NANO_VOLUME_PASS
 
 #define MIN_TRANSMITTANCE   0.05
-#define MIN_DENSITY         0.05
+#define MIN_DENSITY         0.01
 #define CLOUD_COLOR         float3(1, 1, 1)
 
 #define COLOR_NONE          float4(0, 0, 0, 0)
@@ -22,7 +22,7 @@ uniform float	_ClipPlaneMin;
 uniform float	_ClipPlaneMax;
 uniform float   _Density;
 
-uniform int		_RayMarchSamples;
+uniform int		_LightStepsSamples;
 
 struct Ray
 {
@@ -88,59 +88,35 @@ void get_participating_media(out float sigmaS, out float sigmaE, float3 pos, ino
 	sigmaE = max(0.000001, sigmaS);
 }
 
-float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float3 view_dir)
-{
-	float3 light_dir = -(_LightDir.xyz);
-
-	float shadow = 1;
-	float sigmaS = 0.0;
-	float sigmaE = 0.0;
-
-	int step = 0;
-	int steps = 10;
-	float step_size = 1;
-	while (step < steps)
-	{
-		float3 sample_pos = pos + step_size * light_dir;
-
-		get_participating_media(sigmaS, sigmaE, sample_pos, acc);
-		sigmaE *= _Density;
-		shadow *= exp(-sigmaE * step_size);
-
-		if (shadow < MIN_TRANSMITTANCE)
-		{
-			shadow = 0;
-			break;
-		}
-
-		step_size *= 2;
-		step++;
-	}
-	return shadow;
-}
-
-// Exp step with random offset (jitter)
-float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc, float3 view_dir)
+float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 {
 	float3 light_dir = -(_LightDir.xyz);
 
 	float shadow = 1.0;
 	float sigmaS = 0.0;
 	float sigmaE = 0.0;
-
+	
 	float step_size = 1.0;
+
 	int step = 0;
-	int steps = 10;
-	while (step < steps)
+	while (step < _LightStepsSamples)
 	{
-		float3 sample_pos = pos + step_size * light_dir;
+		float3 sample_pos = pos + step_size * jitter * light_dir;
 
 		get_participating_media(sigmaS, sigmaE, sample_pos, acc);
+
+		if (sigmaS < MIN_DENSITY)
+		{
+			step++;
+			step_size *= 2;
+			continue;
+		}
+
 		sigmaE *= _Density;
-		shadow *= exp(-sigmaE * step_size);
+		shadow *= exp(-sigmaE * step_size * jitter);
 
 		step++;
-		step_size *= (2 + random_float(sample_pos));
+		step_size *= 2;
 	}
 	
 	return shadow;
@@ -151,7 +127,7 @@ float phase_function()
 	return 1.0;
 }
 
-float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size)
+float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2 uv)
 {
 	float transmittance  = 1.0;
 	float sigmaS         = 0.0;
@@ -166,7 +142,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size)
 
 	int step = 0;
 	float skip = 0;
-	while (step < _RayMarchSamples)
+	while (step < 256)
 	{
 		if (ray.tmin >= ray.tmax)
 		{
@@ -205,7 +181,11 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size)
 
 		acc_density += sigmaS;
 
-		float3 S = sigmaS * phase_function() * volumetric_shadow_2(pos, volume.acc, ray.direction);
+		//float jitter = 1;
+		//float jitter = 1 + sample_white_noise(uv);
+		float jitter = 1 + sample_stbn_noise(uv);
+
+		float3 S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter);
 		float3 Sint = (S - S * exp(-sigmaE * step_size)) / sigmaE;
 		direct_light += transmittance * Sint;
 
@@ -233,7 +213,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size)
 	return float4(final_color, acc_density);
 }
 
-float4 NanoVolumePass(float3 origin, float3 direction)
+float4 NanoVolumePass(float3 origin, float3 direction, float2 uv)
 {
 	NanoVolume volume; initVolume(volume);
 
@@ -244,7 +224,7 @@ float4 NanoVolumePass(float3 origin, float3 direction)
 	ray.tmax = _ClipPlaneMax;
 
 	float step_size = 1;
-	float4 final_color = raymarch_volume(ray, volume, step_size);
+	float4 final_color = raymarch_volume(ray, volume, step_size, uv);
 	return final_color;
 }
 

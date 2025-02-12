@@ -1,7 +1,13 @@
 #ifndef NOISE_SAMPLER
 #define NOISE_SAMPLER
 
+#define WHITE_NOISE 1
+#define BLUE_NOISE  2
+#define STBN        3
+#define FAST        4
+
 // 3D Noise textures of size 128x128 x 64 frames
+TEXTURE2D_ARRAY(_White);
 TEXTURE2D_ARRAY(_STBN);
 
 // [0, 63]
@@ -15,33 +21,33 @@ float2 get_tiled_uv(float2 uv)
     return tiled_uv;
 }
 
-// https://www.reedbeta.com/blog/quick-and-easy-gpu-random-numbers-in-d3d11/
-uint rand_xorshift(uint seed)
+float get_noise_from_type(int noise_type, float2 uv)
 {
-    // Xorshift algorithm from George Marsaglia's paper
-    seed ^= (seed << 13);
-    seed ^= (seed >> 17);
-    seed ^= (seed << 5);
-    return seed;
+    if (noise_type == WHITE_NOISE)
+    {
+        return SAMPLE_TEXTURE2D_ARRAY(
+            _White,
+            s_linear_clamp_sampler,
+            uv,
+            _Frame
+        ).r;
+    } 
+    else if (noise_type == STBN)
+    {
+        return SAMPLE_TEXTURE2D_ARRAY(
+            _STBN,
+            s_linear_clamp_sampler,
+            uv,
+            _Frame
+        ).r;
+    }
+    else return 0;
 }
 
-float sample_stbn_noise(float2 uv)
+float sample_noise(int noise_type, float2 uv)
 {
     float2 tiled_uv = get_tiled_uv(uv);
-    return SAMPLE_TEXTURE2D_ARRAY(
-        _STBN,
-        s_linear_clamp_sampler,
-        tiled_uv,
-        _Frame
-    ).r;
-}
-
-float sample_white_noise(float2 uv)
-{
-    uint seed = asuint(uv.x + uv.x * uv.y + uv.x * uv.y * _Frame);
-    float res = float(rand_xorshift(seed)) * (1.0 / 4294967296.0);
-    res = float(rand_xorshift(asuint(res))) * (1.0 / 4294967296.0);
-    return max(0.0, min(1.0, res));
+    return get_noise_from_type(noise_type, tiled_uv);
 }
 
 #endif // NOISE_SAMPLER

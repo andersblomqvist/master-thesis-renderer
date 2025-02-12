@@ -118,7 +118,10 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetInt("_LightStepsSamples", (int)nanoVolumeSettings.LightStepsSamples.value);
 
         // For NoiseSampler.hlsl include
+        mat.SetInt("_ActiveNoiseType", nanoVolumeSettings.ActiveNoiseType);
+        mat.SetInt("_ActiveSpatialFilter", nanoVolumeSettings.ActiveSpatialFilter);
         mat.SetTexture("_STBN", nanoVolumeSettings.STBN);
+        mat.SetTexture("_White", nanoVolumeSettings.whiteNoise);
         mat.SetInteger("_Frame", frameCount);
     }
 }

@@ -23,6 +23,8 @@ uniform float	_ClipPlaneMax;
 uniform float   _Density;
 
 uniform int		_LightStepsSamples;
+uniform int     _ActiveNoiseType;
+uniform int     _ActiveSpatialFilter;
 
 struct Ray
 {
@@ -181,9 +183,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 
 		acc_density += sigmaS;
 
-		//float jitter = 1;
-		//float jitter = 1 + sample_white_noise(uv);
-		float jitter = 1 + sample_stbn_noise(uv);
+		float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
 
 		float3 S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter);
 		float3 Sint = (S - S * exp(-sigmaE * step_size)) / sigmaE;

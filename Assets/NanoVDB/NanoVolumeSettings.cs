@@ -13,9 +13,14 @@ public class NanoVolumeSettings : MonoBehaviour
     public bool TemporalFiltering;
 
     [Header("Noise Types")]
+    public int ActiveNoiseType;
     public Texture2DArray STBN;
+    public Texture2DArray whiteNoise;
 
-    private NanoVolumeLoader loader;
+    [Header("Spatial Filters")]
+    public int ActiveSpatialFilter;
+
+    NanoVolumeLoader loader;
 
     void Start()
     {
@@ -26,5 +31,15 @@ public class NanoVolumeSettings : MonoBehaviour
     public void ToggleTemporalFiltering()
     {
         TemporalFiltering = !TemporalFiltering;
+    }
+
+    public void SetNoiseType(int id)
+    {
+        ActiveNoiseType = id;
+    }
+
+    public void SetSpatialFilter(int id)
+    {
+        ActiveSpatialFilter = id;
     }
 }

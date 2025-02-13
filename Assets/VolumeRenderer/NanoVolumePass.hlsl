@@ -24,7 +24,6 @@ uniform float   _Density;
 
 uniform int		_LightStepsSamples;
 uniform int     _ActiveNoiseType;
-uniform int     _ActiveSpatialFilter;
 
 struct Ray
 {

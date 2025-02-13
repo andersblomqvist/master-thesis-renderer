@@ -22,8 +22,9 @@ class NanoVolumeCustomPass : CustomPass
     [SerializeField, HideInInspector]
     Shader volumeShader;
 
-    // Buffers for temporal filter (EMA)
+    // Buffers for filters
     RTHandle newSample;
+    RTHandle spatialFiltered;
     RTHandle frameHistory;
     RTHandle finalFrame;
 
@@ -40,6 +41,13 @@ class NanoVolumeCustomPass : CustomPass
             colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
             dimension: TextureXR.dimension,
             name: "New_Sample_Buffer"
+        );
+
+        spatialFiltered = RTHandles.Alloc(
+            Vector2.one, TextureXR.slices,
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            dimension: TextureXR.dimension,
+            name: "Spatial_Filtered_Buffer"
         );
 
         frameHistory = RTHandles.Alloc(
@@ -64,25 +72,25 @@ class NanoVolumeCustomPass : CustomPass
             return;
         }
 
-        SetUniforms();
+        Vector4 scale = RTHandles.rtHandleProperties.rtHandleScale;
 
-        // If we're not using temporal filter, just render the volume to camera
-        if (!nanoVolumeSettings.TemporalFiltering)
+        SetUniforms(ctx.propertyBlock);
+
+        // Render latest frame to buffer
+        CoreUtils.SetRenderTarget(ctx.cmd, newSample, ClearFlag.Color);
+        CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
+
+        // Apply spatial filter (can be disabled by uniforms)
+        ctx.propertyBlock.SetTexture("_CloudColor", newSample);
+        ctx.propertyBlock.SetInt("_ActiveSpatialFilter", nanoVolumeSettings.ActiveSpatialFilter);
+        CoreUtils.SetRenderTarget(ctx.cmd, spatialFiltered, ClearFlag.Color);
+        CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: SPATIAL_FILTER_PASS_ID);
+
+        // Apply temporal filter
+        if (nanoVolumeSettings.TemporalFiltering)
         {
-            CoreUtils.SetRenderTarget(ctx.cmd, ctx.cameraColorBuffer, ClearFlag.Color);
-            CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
-        }
-        else
-        {
-            // Otherwise, proceed with temporal filter instead
-            Vector4 scale = RTHandles.rtHandleProperties.rtHandleScale;
-
-            // Get new sample
-            CoreUtils.SetRenderTarget(ctx.cmd, newSample, ClearFlag.Color);
-            CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
-
-            // Apply temporal filter
-            ctx.propertyBlock.SetTexture("_NewSample", newSample);
+            // Apply temporal filter (on the spatially filtered buffer)
+            ctx.propertyBlock.SetTexture("_NewSample", spatialFiltered);
             ctx.propertyBlock.SetTexture("_FrameHistory", frameHistory);
             CoreUtils.SetRenderTarget(ctx.cmd, finalFrame, ClearFlag.Color);
             CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: TEMPORAL_FILTER_PASS_ID);
@@ -92,11 +100,15 @@ class NanoVolumeCustomPass : CustomPass
             CoreUtils.SetRenderTarget(ctx.cmd, frameHistory, ClearFlag.Color);
             CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: COPY_HISTORY_PASS_ID);
 
-            // Blit final frame to camera
+            // Blit temporal filtered frame to camera
             ctx.cmd.Blit(finalFrame, ctx.cameraColorBuffer, new Vector2(scale.x, scale.y), Vector2.zero, 0, 0);
         }
+        else
+        {
+            // Blit spatially filtered frame to camera
+            ctx.cmd.Blit(spatialFiltered, ctx.cameraColorBuffer, new Vector2(scale.x, scale.y), Vector2.zero, 0, 0);
+        }
 
-        // Update frame count
         frameCount = (frameCount + 1) % MAX_FRAME_COUNT;
     }
 
@@ -104,11 +116,12 @@ class NanoVolumeCustomPass : CustomPass
     {
         CoreUtils.Destroy(mat);
         newSample.Release();
+        spatialFiltered.Release();
         frameHistory.Release();
         finalFrame.Release();
     }
 
-    void SetUniforms()
+    void SetUniforms(MaterialPropertyBlock mat)
     {
         mat.SetBuffer("buf", nanoVolumeLoaderComponent.GetGPUBuffer());
         mat.SetFloat("_ClipPlaneMin", 0.01f);
@@ -121,7 +134,6 @@ class NanoVolumeCustomPass : CustomPass
 
         // For NoiseSampler.hlsl include
         mat.SetInt("_ActiveNoiseType", nanoVolumeSettings.ActiveNoiseType);
-        mat.SetInt("_ActiveSpatialFilter", nanoVolumeSettings.ActiveSpatialFilter);
         mat.SetTexture("_White", nanoVolumeSettings.whiteNoise);
         mat.SetTexture("_Blue", nanoVolumeSettings.blueNoise);
         mat.SetTexture("_STBN", nanoVolumeSettings.STBN);

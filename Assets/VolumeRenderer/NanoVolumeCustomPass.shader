@@ -10,8 +10,9 @@ Shader "FullScreen/NanoVolumePass"
     // Commons, includes many others
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/RenderPass/CustomPass/CustomPassCommon.hlsl"
 
-    #include "Assets/VolumeRenderer/TemporalFilterPass.hlsl"
     #include "Assets/VolumeRenderer/NoiseSampler.hlsl"
+    #include "Assets/VolumeRenderer/SpatialFilterPass.hlsl"
+    #include "Assets/VolumeRenderer/TemporalFilterPass.hlsl"
     #include "Assets/VolumeRenderer/NanoVolumePass.hlsl"
 
     float4 FullScreenPass(Varyings varyings) : SV_Target
@@ -66,7 +67,8 @@ Shader "FullScreen/NanoVolumePass"
         float2 scaling = _RTHandleScale.xy;
         float2 uv = posInput.positionNDC.xy * scaling;
 
-        return float4(0,0,0,0);
+        float4 filteredFrame = SpatialPass(uv);
+        return filteredFrame;
     }
 
     TEXTURE2D_X(_FinalFrame);

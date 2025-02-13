@@ -55,12 +55,17 @@ public class TextureImportProcessor : AssetPostprocessor
         Color[] emptyPixels = Enumerable.Repeat(Color.clear, sheetSize * sheetSize).ToArray();
         spritesheet.SetPixels(emptyPixels);
         
+        // Sort textures by name length and alphabetically
+        textures.Sort((a, b) => a.name.Length == b.name.Length ? a.name.CompareTo(b.name) : a.name.Length.CompareTo(b.name.Length));
+ 
         for (int i = 0; i < count; i++)
         {
-            int x = (i % gridSize) * textureSize;
-            int y = (i / gridSize) * textureSize;
+            int x = i % gridSize * textureSize;
+            int y = (count - 1 - i) / gridSize * textureSize;
             Texture2D tex = textures[i];
             spritesheet.SetPixels(x, y, textureSize, textureSize, tex.GetPixels());
+
+            Debug.Log($"Added {tex.name} to spritesheet at ({x}, {y}) with index {i}");
         }
 
         spritesheet.Apply();

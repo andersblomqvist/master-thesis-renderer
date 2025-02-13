@@ -5,9 +5,11 @@ using UnityEngine.Experimental.Rendering;
 
 class NanoVolumeCustomPass : CustomPass
 {
+    // Passes must be in this order in the .shader filer
     const int NANO_VOLUME_PASS_ID       = 0;
-    const int TEMPORAL_FILTER_PASS_ID   = 1;
-    const int COPY_HISTORY_PASS_ID      = 2;
+    const int SPATIAL_FILTER_PASS_ID    = 1;
+    const int TEMPORAL_FILTER_PASS_ID   = 2;
+    const int COPY_HISTORY_PASS_ID      = 3;
 
     const int MAX_FRAME_COUNT = 64;
 
@@ -120,8 +122,9 @@ class NanoVolumeCustomPass : CustomPass
         // For NoiseSampler.hlsl include
         mat.SetInt("_ActiveNoiseType", nanoVolumeSettings.ActiveNoiseType);
         mat.SetInt("_ActiveSpatialFilter", nanoVolumeSettings.ActiveSpatialFilter);
-        mat.SetTexture("_STBN", nanoVolumeSettings.STBN);
         mat.SetTexture("_White", nanoVolumeSettings.whiteNoise);
+        mat.SetTexture("_Blue", nanoVolumeSettings.blueNoise);
+        mat.SetTexture("_STBN", nanoVolumeSettings.STBN);
         mat.SetInteger("_Frame", frameCount);
     }
 }

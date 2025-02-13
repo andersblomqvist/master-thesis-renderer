@@ -8,6 +8,7 @@
 
 // 3D Noise textures of size 128x128 x 64 frames
 TEXTURE2D_ARRAY(_White);
+TEXTURE2D_ARRAY(_Blue);
 TEXTURE2D_ARRAY(_STBN);
 
 // [0, 63]
@@ -31,7 +32,16 @@ float get_noise_from_type(int noise_type, float2 uv)
             uv,
             _Frame
         ).r;
-    } 
+    }
+    else if (noise_type == BLUE_NOISE)
+    {
+        return SAMPLE_TEXTURE2D_ARRAY(
+            _Blue,
+            s_linear_clamp_sampler,
+            uv,
+            _Frame
+        ).r;
+    }
     else if (noise_type == STBN)
     {
         return SAMPLE_TEXTURE2D_ARRAY(

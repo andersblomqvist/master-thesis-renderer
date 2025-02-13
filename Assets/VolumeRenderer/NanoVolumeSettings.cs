@@ -14,8 +14,9 @@ public class NanoVolumeSettings : MonoBehaviour
 
     [Header("Noise Types")]
     public int ActiveNoiseType;
-    public Texture2DArray STBN;
     public Texture2DArray whiteNoise;
+    public Texture2DArray blueNoise;
+    public Texture2DArray STBN;
 
     [Header("Spatial Filters")]
     public int ActiveSpatialFilter;

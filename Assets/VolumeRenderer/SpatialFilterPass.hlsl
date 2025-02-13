@@ -1,0 +1,6 @@
+#ifndef SPATIAL_FILTER_PASS
+#define SPATIAL_FILTER_PASS
+
+TEXTURE2D_X(_MainColor);
+
+#endif // SPATIAL_FILTER_PASS

@@ -30,6 +30,23 @@ float4 gaussian_blur(float2 uv)
     return color;
 }
 
+float4 box_three_filter(float2 uv)
+{
+    float4 result = 0;
+    float2 texel_size = float2(1.0 / _ScreenSize.x, 1.0 / _ScreenSize.y);
+
+    int radius = 1;
+    for (int y = -radius; y <= radius; y++)
+    {
+        for (int x = -radius; x <= radius; x++)
+        {
+            float2 offset = float2(x, y) * texel_size;
+            result += SAMPLE_TEXTURE2D_X(_CloudColor, s_linear_clamp_sampler, uv + offset);
+        }
+    }
+    return result / 9.0;
+}
+
 float4 unfiltered(float2 uv)
 {
     float4 color = SAMPLE_TEXTURE2D_X(_CloudColor, s_linear_clamp_sampler, uv);
@@ -41,6 +58,10 @@ float4 SpatialPass(float2 uv)
     if (_ActiveSpatialFilter == GAUSSIAN)
     {
         return gaussian_blur(uv);
+    }
+    else if (_ActiveSpatialFilter == BOX)
+    {
+        return box_three_filter(uv);
     }
 
     return unfiltered(uv);

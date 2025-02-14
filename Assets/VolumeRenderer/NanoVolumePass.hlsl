@@ -23,6 +23,9 @@ uniform float	_ClipPlaneMax;
 uniform float   _Density;
 
 uniform int		_LightStepsSamples;
+
+// Matches the noise types #define values. Set to WHITE_NOISE by default.
+// Found in Assets/VolumeRenderer/NoiseSampler.hlsl
 uniform int     _ActiveNoiseType;
 
 struct Ray
@@ -109,7 +112,7 @@ float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 		if (sigmaS < MIN_DENSITY)
 		{
 			step++;
-			step_size *= 2;
+			step_size *= 1.6;
 			continue;
 		}
 
@@ -117,7 +120,36 @@ float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 		shadow *= exp(-sigmaE * step_size * jitter);
 
 		step++;
-		step_size *= 2;
+		step_size *= 1.6;
+	}
+	
+	return shadow;
+}
+
+float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
+{
+	float3 light_dir = -(_LightDir.xyz);
+
+	float shadow = 1.0;
+	float sigmaS = 0.0;
+	float sigmaE = 0.0;
+	
+	float lightRayLength = 600.0;
+	float step_size = (lightRayLength / _LightStepsSamples) * jitter;
+
+	for (float t = step_size; t < lightRayLength; t += step_size)
+	{
+		float3 sample_pos = pos + t * jitter * light_dir;
+
+		get_participating_media(sigmaS, sigmaE, sample_pos, acc);
+
+		if (sigmaS < MIN_DENSITY)
+		{
+			continue;
+		}
+
+		sigmaE *= _Density;
+		shadow *= exp(-sigmaE * step_size);
 	}
 	
 	return shadow;
@@ -137,13 +169,17 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 	float3 direct_light  = 0.0;
 	float3 ambient_light = 0.0;
 
+	float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
+
 	float not_used;
 	bool hit = get_hdda_hit(volume.acc, ray, not_used);
 	if (!hit) { return COLOR_NONE; }
 
+	ray.tmin += jitter;
+
 	int step = 0;
 	float skip = 0;
-	while (step < 256)
+	while (step < 512)
 	{
 		if (ray.tmin >= ray.tmax)
 		{
@@ -159,30 +195,17 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		if (dim > 1)
 		{
 			step++;
-			float skip_step = 15;
-			ray.tmin += skip_step;
-			skip = skip_step;
+			ray.tmin += 10;
 			continue;
 		}
 		if (sigmaS < MIN_DENSITY)
 		{
 			step++;
-			float skip_step = 5;
-			ray.tmin += skip_step;
-			skip = skip_step;
+			ray.tmin += jitter;
 			continue;
 		}
 
-		if (skip > 0) {
-			// backtrack a little bit
-			ray.tmin -= skip * 0.8;
-			pos = ray.origin + ray.direction * ray.tmin;
-			skip = 0;
-		}
-
 		acc_density += sigmaS;
-
-		float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
 
 		float3 S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter);
 		float3 Sint = (S - S * exp(-sigmaE * step_size)) / sigmaE;
@@ -204,7 +227,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		}
 
 		step++;
-		ray.tmin += step_size;
+		ray.tmin += step_size + jitter;
 	}
 
 	float3 final_color = direct_light + ambient_light;

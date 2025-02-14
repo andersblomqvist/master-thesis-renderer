@@ -9,6 +9,7 @@ public class FPSCounter : MonoBehaviour
 
     void Start()
     {
+        Application.targetFrameRate = 300;
         avgfpsText = GetComponent<TMPro.TMP_Text>(); 
     }
 

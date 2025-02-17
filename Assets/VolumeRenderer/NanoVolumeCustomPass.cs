@@ -58,7 +58,7 @@ class NanoVolumeCustomPass : CustomPass
 
     protected override void Execute(CustomPassContext ctx)
     {
-        if (!nanoVolumeLoaderComponent.IsLoaded())
+        if (nanoVolumeSettings.activeAsset == null || !nanoVolumeSettings.activeAsset.IsLoaded())
         {
             return;
         }
@@ -108,7 +108,7 @@ class NanoVolumeCustomPass : CustomPass
 
     void SetUniforms(MaterialPropertyBlock mat)
     {
-        mat.SetBuffer("buf", nanoVolumeLoaderComponent.GetGPUBuffer());
+        mat.SetBuffer("buf", nanoVolumeSettings.activeAsset.GetGPUBuffer());
         mat.SetFloat("_ClipPlaneMin", 0.01f);
         mat.SetFloat("_ClipPlaneMax", 1500.0f);
 

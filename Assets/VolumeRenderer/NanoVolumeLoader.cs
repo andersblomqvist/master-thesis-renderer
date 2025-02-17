@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -13,93 +14,82 @@ public class NanoVolumeLoader : MonoBehaviour
         public ulong structStride;
     }; unsafe NanoVolume* nanoVolume;
 
-    [Header("Assets/path/to/volume.nvdb")]
-
-    public string volumePath;
+    [SerializeField]
+    private List<NanoVDBAsset> nanoVDBAssets;
 
     private ComputeBuffer gpuBuffer;
     private uint[] buf;
-    private bool ok;
-    private bool loaded = false;
 
-    private void Awake()
+    private unsafe void Awake()
     {
         SetDebugLogCallback(DebugLogCallback);
         
-        ok = PrepareVolume();
-        if (!ok) return;
-        
-        unsafe
+        Debug.Log($"Loading {nanoVDBAssets.Count} NanoVDB Assets");
+        float startTime = Time.realtimeSinceStartup;
+
+        foreach (NanoVDBAsset asset in nanoVDBAssets)
         {
-            int bufferSize = (int)nanoVolume->elementCount;
-            int stride = (int)nanoVolume->structStride;
+            // Reads .nvdb from disk and loads into RAM (by NanoVDBWrapper.dll)
+            // Accessed by the nanoVolume pointer
+            LoadNVDB(asset.volumePath, out nanoVolume);
 
-            buf = new uint[bufferSize];
+            // Load the Asset GPU buffer
+            LoadAssetGPUBuffer(asset);
 
-            // Go through each element in nanoVolume buf and copy it to the buf array
-            for (int i = 0; i < bufferSize; i++)
-            {
-                buf[i] = nanoVolume->buf[i];
-            }
-
-            gpuBuffer = new ComputeBuffer(
-                bufferSize,
-                stride,
-                ComputeBufferType.Default
-            );
-            gpuBuffer.SetData(buf);
-
-            Debug.Log("GPU Buffer initialized");
-            loaded = true;
+            // Free the RAM in the wrapper
+            FreeNVDB(nanoVolume);
+            nanoVolume = null;
         }
+
+        Debug.Log($"NanoVDB Assets loaded in {Time.realtimeSinceStartup - startTime} seconds");
     }
 
-    private unsafe bool PrepareVolume()
+    private unsafe void LoadAssetGPUBuffer(NanoVDBAsset volume)
     {
-        LoadNVDB(volumePath, out nanoVolume);
+        int bufferSize = (int)nanoVolume->elementCount;
+        int stride = (int)nanoVolume->structStride;
 
-        if (nanoVolume != null)
-        {
-            Debug.Log($"NanoVDB initialized successfully. size={nanoVolume->byteSize} bytes, " +
-                $"array length={nanoVolume->elementCount}, stride={nanoVolume->structStride}");
+        buf = new uint[bufferSize];
 
-            return true;
-        }
-        else
+        // Go through each element in nanoVolume buf and copy it to the buf array
+        for (int i = 0; i < bufferSize; i++)
         {
-            Debug.LogError("Failed to create NanoVolume, aborting.");
-            return false;
+            buf[i] = nanoVolume->buf[i];
         }
+
+        gpuBuffer = new ComputeBuffer(
+            bufferSize,
+            stride,
+            ComputeBufferType.Default
+        );
+        gpuBuffer.SetData(buf);
+
+        volume.SetGPUBuffer(gpuBuffer);
+        Debug.Log($"GPU Buffer initialized for {volume.volumePath}");
+    }
+
+    public NanoVDBAsset GetNanoVDBAsset(int index)
+    {
+        if (index < 0 || index >= nanoVDBAssets.Count)
+        {
+            Debug.LogError($"NanoVDB Asset index of {index} is out of range. Range is [0, {nanoVDBAssets.Count - 1}]");
+            return null;
+        }
+
+        return nanoVDBAssets[index];
+    }
+
+    public int GetNumberOfAssets()
+    {
+        return nanoVDBAssets.Count;
     }
 
     private void OnDestroy()
     {
-        gpuBuffer?.Dispose();
-
-        unsafe
+        foreach (NanoVDBAsset asset in nanoVDBAssets)
         {
-            if (nanoVolume != null)
-            {
-                FreeNVDB(nanoVolume);
-                nanoVolume = null;
-            }
+            asset.gpuBuffer?.Dispose();
         }
-    }
-
-    public ComputeBuffer GetGPUBuffer()
-    {
-        if (gpuBuffer == null)
-        {
-            Debug.LogError("Buffer is null. Make sure the NanoLoader is finished before accessing this buffer.");
-            return null;
-        }
-
-        return gpuBuffer;
-    }
-
-    public bool IsLoaded()
-    {
-        return loaded;
     }
 
     private delegate void DebugLogDelegate(IntPtr message);

@@ -1,10 +1,13 @@
+using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class NanoVolumeSettings : MonoBehaviour
 {
+    public NanoVDBAsset activeAsset;
+    int activeAssetID;
+
     public Light Sun;
     public TMP_Text VDBName;
     public Slider LightStepsSamples;
@@ -26,7 +29,8 @@ public class NanoVolumeSettings : MonoBehaviour
     void Start()
     {
         loader = GetComponent<NanoVolumeLoader>();
-        VDBName.text = loader.volumePath;
+        activeAssetID = 0;
+        SetNanoVDBAsset(activeAssetID);
     }
 
     public void ToggleTemporalFiltering()
@@ -42,5 +46,23 @@ public class NanoVolumeSettings : MonoBehaviour
     public void SetSpatialFilter(int id)
     {
         ActiveSpatialFilter = id;
+    }
+
+    public void SetNanoVDBAsset(int id)
+    {
+        activeAsset = loader.GetNanoVDBAsset(id);
+        VDBName.text = activeAsset.volumePath;
+    }
+
+    public void LoadNextModel(int direction)
+    {
+        int nextID = (activeAssetID + direction) % loader.GetNumberOfAssets();
+
+        if (nextID < 0)
+        {
+            nextID = loader.GetNumberOfAssets() - 1;
+        }
+        activeAssetID = nextID;
+        SetNanoVDBAsset(nextID);
     }
 }

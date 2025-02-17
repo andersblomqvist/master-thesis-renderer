@@ -42,7 +42,7 @@ struct NanoVolume
 	pnanovdb_readaccessor_t acc;
 };
 
-void initVolume(inout NanoVolume volume)
+void init_volume(inout NanoVolume volume)
 {
 	pnanovdb_grid_handle_t  grid        = { {0} };
 	pnanovdb_grid_type_t    grid_type   = pnanovdb_buf_read_uint32(buf, PNANOVDB_GRID_OFF_GRID_TYPE);
@@ -236,7 +236,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 
 float4 NanoVolumePass(float3 origin, float3 direction, float2 uv)
 {
-	NanoVolume volume; initVolume(volume);
+	NanoVolume volume; init_volume(volume);
 
 	Ray ray;
 	ray.origin = origin;

@@ -49,7 +49,7 @@ float4 unfiltered(TEXTURE2D_X(tex), float2 uv)
 }
 
 // Called from TemporalFilterPass.hlsl
-float4 SpatialPass(TEXTURE2D_X(tex), float2 uv, int active_filter)
+float4 SpatialFilterPass(TEXTURE2D_X(tex), float2 uv, int active_filter)
 {
     if (active_filter == GAUSSIAN)
     {

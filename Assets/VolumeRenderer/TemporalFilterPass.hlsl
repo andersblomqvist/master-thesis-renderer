@@ -10,7 +10,7 @@ uniform int _ActiveSpatialFilter;
 float4 TemporalPass(float2 uv, float2 uv_prev)
 {
     float4 history = SAMPLE_TEXTURE2D_X(_FrameHistory, s_linear_clamp_sampler, uv_prev);
-    float4 newSample = SpatialPass(_NewSample, uv, _ActiveSpatialFilter);
+    float4 newSample = SpatialFilterPass(_NewSample, uv, _ActiveSpatialFilter);
 
     // Exponential moving average
     float alpha = 0.1;

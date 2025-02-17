@@ -24,9 +24,8 @@ uniform float   _Density;
 
 uniform int		_LightStepsSamples;
 
-// Matches the noise types #define values. Set to WHITE_NOISE by default.
-// Found in Assets/VolumeRenderer/NoiseSampler.hlsl
-uniform int     _ActiveNoiseType;
+// Matches the noise types #define values in NoiseSampler.hlsl. Set to WHITE_NOISE by default.
+uniform int _ActiveNoiseType;
 
 struct Ray
 {

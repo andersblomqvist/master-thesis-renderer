@@ -58,19 +58,6 @@ Shader "FullScreen/NanoVolumePass"
         return blendedFrame;
     }
 
-    float4 SpatialFilterPass(Varyings varyings) : SV_Target
-    {
-        UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
-
-        float depth = LoadCameraDepth(varyings.positionCS.xy);
-        PositionInputs posInput = GetPositionInput(varyings.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
-        float2 scaling = _RTHandleScale.xy;
-        float2 uv = posInput.positionNDC.xy * scaling;
-
-        float4 filteredFrame = SpatialPass(uv);
-        return filteredFrame;
-    }
-
     TEXTURE2D_X(_FinalFrame);
 
     float4 CopyHistoryPass(Varyings varyings) : SV_Target
@@ -105,16 +92,6 @@ Shader "FullScreen/NanoVolumePass"
 
         Pass // ID 1
         {
-            Name "Spatial Filter Pass"
-            Cull Off ZWrite Off ZTest Less Blend Off
-
-            HLSLPROGRAM
-                #pragma fragment SpatialFilterPass
-            ENDHLSL
-        }
-
-        Pass // ID 2
-        {
             Name "Temporal Filter Pass"
             Cull Off ZWrite Off ZTest Less Blend Off
 
@@ -123,7 +100,7 @@ Shader "FullScreen/NanoVolumePass"
             ENDHLSL
         }
 
-        Pass // ID 3
+        Pass // ID 2
         {
             Name "Copy History Pass"
             Cull Off ZWrite Off ZTest Less Blend Off

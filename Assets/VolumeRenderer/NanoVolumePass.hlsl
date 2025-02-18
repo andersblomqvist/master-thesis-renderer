@@ -169,7 +169,8 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 	float3 direct_light  = 0.0;
 	float3 ambient_light = 0.0;
 
-	float jitter = 1 + sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
+	float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
+	float jitter_scaled = 1 + sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
 
 	float not_used;
 	bool hit = get_hdda_hit(volume.acc, ray, not_used);
@@ -207,7 +208,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 
 		acc_density += sigmaS;
 
-		float3 S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter);
+		float3 S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter_scaled);
 		float3 Sint = (S - S * exp(-sigmaE * step_size)) / sigmaE;
 		direct_light += transmittance * Sint;
 

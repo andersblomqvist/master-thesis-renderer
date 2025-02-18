@@ -21,6 +21,7 @@ uniform float	_LightRayLength;
 uniform float	_ClipPlaneMin;
 uniform float	_ClipPlaneMax;
 uniform float   _Density;
+uniform float   _NoiseStrength;
 
 uniform int		_LightStepsSamples;
 
@@ -168,7 +169,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 	float3 direct_light  = 0.0;
 	float3 ambient_light = 0.0;
 
-	float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
+	float jitter = 1 + sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
 
 	float not_used;
 	bool hit = get_hdda_hit(volume.acc, ray, not_used);

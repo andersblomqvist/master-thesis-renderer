@@ -12,6 +12,7 @@ public class NanoVolumeSettings : MonoBehaviour
     public TMP_Text VDBName;
     public Slider LightStepsSamples;
     public Slider Density;
+    public Slider NoiseStrength;
 
     public bool TemporalFiltering;
 

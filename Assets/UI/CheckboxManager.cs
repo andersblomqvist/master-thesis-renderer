@@ -9,6 +9,7 @@ public class CheckboxManager : MonoBehaviour
     public Toggle noise2;
     public Toggle noise3;
     public Toggle noise4;
+    public Toggle noise5;
 
     public Toggle spFilter1;
     public Toggle spFilter2;
@@ -28,6 +29,7 @@ public class CheckboxManager : MonoBehaviour
         noise2.isOn = id == 2;
         noise3.isOn = id == 3;
         noise4.isOn = id == 4;
+        noise5.isOn = id == 5;
     }
 
     public void ToggleSpatialFilter(int id)

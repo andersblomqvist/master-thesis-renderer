@@ -5,6 +5,7 @@
 #define BLUE_NOISE  2
 #define STBN        3
 #define FAST        4
+#define IGN         5
 
 // 3D Noise textures of size 128x128 x 64 frames
 TEXTURE2D_ARRAY(_White);
@@ -20,6 +21,19 @@ float2 get_tiled_uv(float2 uv)
     float2 tile_factor = screen / 128.0;
     float2 tiled_uv = frac(uv * tile_factor);
     return tiled_uv;
+}
+
+// From  Next Generation Post Processing in Call of Duty: Advanced Warfare [Jimenez 2014]
+// http://advances.realtimerendering.com/s2014/index.html
+float interleaved_gradient_noise(float2 uv, int frame_count)
+{
+    // Convert UV coordinates to clip space pixel coordinates
+    float2 clip_space = uv * _ScreenParams.xy;
+    
+    const float3 magic = float3(0.06711056f, 0.00583715f, 52.9829189f);
+    float2 frameMagicScale = float2(2.083f, 4.867f);
+    clip_space += frame_count * frameMagicScale;
+    return frac(magic.z * frac(dot(clip_space, magic.xy)));
 }
 
 float get_noise_from_type(int noise_type, float2 uv)
@@ -50,6 +64,15 @@ float get_noise_from_type(int noise_type, float2 uv)
             uv,
             _Frame
         ).r;
+    }
+    else if (noise_type == FAST)
+    {
+        // TODO: add fast noise
+        return 0;
+    }
+    else if (noise_type == IGN)
+    {
+        return interleaved_gradient_noise(uv, _Frame);
     }
     else return 0;
 }

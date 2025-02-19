@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ChangeVDBModel : MonoBehaviour
 {
-    public NanoVolumeSettings volumeSettings;
+    public NanoVolumeSceneSettings volumeSettings;
 
     void Update()
     {

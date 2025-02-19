@@ -88,7 +88,7 @@ public class NanoVolumeLoader : MonoBehaviour
     {
         foreach (NanoVDBAsset asset in nanoVDBAssets)
         {
-            asset.gpuBuffer?.Dispose();
+            asset.GetGPUBuffer()?.Dispose();
         }
     }
 

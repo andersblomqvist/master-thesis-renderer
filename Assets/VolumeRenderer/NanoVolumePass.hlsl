@@ -19,6 +19,8 @@ uniform float   _NoiseStrength;
 
 uniform int		_LightStepsSamples;
 
+uniform bool	_IsGroundTruth;
+
 // Matches the noise types #define values in NoiseSampler.hlsl. Set to WHITE_NOISE by default.
 uniform int _ActiveNoiseType;
 
@@ -120,7 +122,7 @@ float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 	return shadow;
 }
 
-float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
+float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
 {
 	float3 light_dir = -(_LightDir.xyz);
 
@@ -128,12 +130,11 @@ float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 	float sigmaS = 0.0;
 	float sigmaE = 0.0;
 	
-	float lightRayLength = 600.0;
-	float step_size = (lightRayLength / _LightStepsSamples) * jitter;
+	float step_size = (_LightRayLength / _LightStepsSamples);
 
-	for (float t = step_size; t < lightRayLength; t += step_size)
+	for (float t = step_size; t < _LightRayLength; t += step_size)
 	{
-		float3 sample_pos = pos + t * jitter * light_dir;
+		float3 sample_pos = pos + t * light_dir;
 
 		get_participating_media(sigmaS, sigmaE, sample_pos, acc);
 
@@ -163,14 +164,16 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 	float3 direct_light  = 0.0;
 	float3 ambient_light = 0.0;
 
-	float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
-	float jitter_scaled = 1 + sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
+	float jitter = 1 + sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
+
+	// caution: we are jittering cloud samples here
+	float cloud_sample_jitter = 1;// + sample_noise(5, uv);
 
 	float not_used;
 	bool hit = get_hdda_hit(volume.acc, ray, not_used);
-	if (!hit) { return COLOR_NONE; }
+	if (!hit) { return float4(0,0,0,0); }
 
-	ray.tmin += jitter;
+	ray.tmin += step_size;
 
 	int step = 0;
 	float skip = 0;
@@ -190,19 +193,27 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		if (dim > 1)
 		{
 			step++;
-			ray.tmin += 10;
+			ray.tmin += step_size * 10;
 			continue;
 		}
 		if (sigmaS < MIN_DENSITY)
 		{
 			step++;
-			ray.tmin += jitter;
+			ray.tmin += step_size;
 			continue;
 		}
-
+		
 		acc_density += sigmaS;
 
-		float3 S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter_scaled);
+		float S = 0;
+		if (_IsGroundTruth)
+		{
+			S = sigmaS * phase_function() * volumetric_shadow_2(pos, volume.acc);
+		}
+		else
+		{
+			S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter);
+		}
 		float3 Sint = (S - S * exp(-sigmaE * step_size)) / sigmaE;
 		direct_light += transmittance * Sint;
 
@@ -222,7 +233,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		}
 
 		step++;
-		ray.tmin += step_size + jitter;
+		ray.tmin += step_size + cloud_sample_jitter;
 	}
 
 	float3 final_color = direct_light + ambient_light;
@@ -240,7 +251,7 @@ float4 NanoVolumePass(float3 origin, float3 direction, float2 uv)
 	ray.tmin = _ClipPlaneMin;
 	ray.tmax = _ClipPlaneMax;
 
-	float step_size = 1;
+	float step_size = 0.57;
 	float4 final_color = raymarch_volume(ray, volume, step_size, uv);
 	return final_color;
 }

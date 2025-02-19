@@ -12,9 +12,10 @@ class NanoVolumeCustomPass : CustomPass
 
     const int MAX_FRAME_COUNT = 64;
 
-    public NanoVolumeLoader     nanoVolumeLoaderComponent;
-    public NanoVolumeSettings   nanoVolumeSettings;
+    public NanoVolumeLoader         nanoVolumeLoaderComponent;
+    public NanoVolumeSceneSettings  nanoVolumeSettings;
 
+    NanoVDBAsset activeAsset;
     Material mat;
 
     // To make sure the shader ends up in the build, we keep a reference to it
@@ -58,8 +59,15 @@ class NanoVolumeCustomPass : CustomPass
 
     protected override void Execute(CustomPassContext ctx)
     {
-        if (nanoVolumeSettings.activeAsset == null || !nanoVolumeSettings.activeAsset.IsLoaded())
+        activeAsset = nanoVolumeSettings.activeAsset;
+        if (activeAsset == null || !activeAsset.IsLoaded())
         {
+            return;
+        }
+
+        if (nanoVolumeSettings.RenderGroundTruth)
+        {
+            RenderGroundTruth(ctx);
             return;
         }
 
@@ -98,25 +106,28 @@ class NanoVolumeCustomPass : CustomPass
         frameCount = (frameCount + 1) % MAX_FRAME_COUNT;
     }
 
-    protected override void Cleanup()
+    void RenderGroundTruth(CustomPassContext ctx)
     {
-        CoreUtils.Destroy(mat);
-        newSample.Release();
-        frameHistory.Release();
-        finalFrame.Release();
+        SetGTUniforms(ctx.propertyBlock);
+
+        // Render directly to camera
+        CoreUtils.SetRenderTarget(ctx.cmd, ctx.cameraColorBuffer, ClearFlag.Color);
+        CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
     }
 
     void SetUniforms(MaterialPropertyBlock mat)
     {
-        mat.SetBuffer("buf", nanoVolumeSettings.activeAsset.GetGPUBuffer());
+        mat.SetInt("_IsGroundTruth", 0);
+
+        mat.SetBuffer("buf", activeAsset.GetGPUBuffer());
         mat.SetFloat("_ClipPlaneMin", 0.01f);
         mat.SetFloat("_ClipPlaneMax", 1500.0f);
 
-        mat.SetVector("_LightDir", nanoVolumeSettings.Sun.transform.forward);
-        mat.SetFloat("_Density", nanoVolumeSettings.Density.value);
-        mat.SetFloat("_NoiseStrength", nanoVolumeSettings.NoiseStrength.value);
+        mat.SetVector("_LightDir", nanoVolumeSettings.sun.transform.forward);
 
-        mat.SetInt("_LightStepsSamples", (int)nanoVolumeSettings.LightStepsSamples.value);
+        mat.SetFloat("_Density", activeAsset.density);
+        mat.SetFloat("_NoiseStrength", activeAsset.noiseStrength);
+        mat.SetInt("_LightStepsSamples", activeAsset.lightStepsSamples);
 
         // For NoiseSampler.hlsl include
         mat.SetInt("_ActiveNoiseType", nanoVolumeSettings.ActiveNoiseType);
@@ -124,5 +135,28 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetTexture("_Blue", nanoVolumeSettings.blueNoise);
         mat.SetTexture("_STBN", nanoVolumeSettings.STBN);
         mat.SetInteger("_Frame", frameCount);
+    }
+
+    void SetGTUniforms(MaterialPropertyBlock mat)
+    {
+        mat.SetInt("_IsGroundTruth", 1);
+
+        mat.SetBuffer("buf", activeAsset.GetGPUBuffer());
+        mat.SetFloat("_ClipPlaneMin", 0.01f);
+        mat.SetFloat("_ClipPlaneMax", 1500.0f);
+
+        mat.SetVector("_LightDir", nanoVolumeSettings.sun.transform.forward);
+
+        mat.SetFloat("_Density", activeAsset.gtDensity);
+        mat.SetFloat("_LightRayLength", activeAsset.gtLightRayLength);
+        mat.SetInt("_LightStepsSamples", activeAsset.gtLightStepsSamples);
+    }
+
+    protected override void Cleanup()
+    {
+        CoreUtils.Destroy(mat);
+        newSample.Release();
+        frameHistory.Release();
+        finalFrame.Release();
     }
 }

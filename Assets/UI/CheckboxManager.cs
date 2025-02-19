@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class CheckboxManager : MonoBehaviour
 {
-    public NanoVolumeSettings settings;
+    public NanoVolumeSceneSettings settings;
 
     public Toggle noise1;
     public Toggle noise2;

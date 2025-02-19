@@ -3,12 +3,6 @@
 
 #define MIN_TRANSMITTANCE   0.05
 #define MIN_DENSITY         0.01
-#define CLOUD_COLOR         float3(1, 1, 1)
-
-#define COLOR_NONE          float4(0, 0, 0, 0)
-#define COLOR_RED           float4(1, 0, 0, 1)
-#define COLOR_GREEN         float4(0, 1, 0, 1)
-#define COLOR_BLUE          float4(0, 0, 1, 1)
 
 #define PNANOVDB_HLSL
 #include "PNanoVDB.hlsl"

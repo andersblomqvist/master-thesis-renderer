@@ -166,14 +166,9 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 
 	float jitter = 1 + sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
 
-	// caution: we are jittering cloud samples here
-	float cloud_sample_jitter = 1;// + sample_noise(5, uv);
-
 	float not_used;
 	bool hit = get_hdda_hit(volume.acc, ray, not_used);
 	if (!hit) { return float4(0,0,0,0); }
-
-	ray.tmin += step_size;
 
 	int step = 0;
 	float skip = 0;
@@ -193,7 +188,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		if (dim > 1)
 		{
 			step++;
-			ray.tmin += step_size * 10;
+			ray.tmin += 10;
 			continue;
 		}
 		if (sigmaS < MIN_DENSITY)
@@ -233,7 +228,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		}
 
 		step++;
-		ray.tmin += step_size + cloud_sample_jitter;
+		ray.tmin += step_size;
 	}
 
 	float3 final_color = direct_light + ambient_light;
@@ -251,7 +246,7 @@ float4 NanoVolumePass(float3 origin, float3 direction, float2 uv)
 	ray.tmin = _ClipPlaneMin;
 	ray.tmax = _ClipPlaneMax;
 
-	float step_size = 0.57;
+	float step_size = 2;
 	float4 final_color = raymarch_volume(ray, volume, step_size, uv);
 	return final_color;
 }

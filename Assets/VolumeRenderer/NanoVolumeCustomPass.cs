@@ -9,6 +9,7 @@ class NanoVolumeCustomPass : CustomPass
     const int NANO_VOLUME_PASS_ID       = 0;
     const int TEMPORAL_FILTER_PASS_ID   = 1;
     const int COPY_HISTORY_PASS_ID      = 2;
+    const int SPATIAL_FILTER_PASS_ID    = 3;
 
     const int MAX_FRAME_COUNT = 64;
 
@@ -24,6 +25,7 @@ class NanoVolumeCustomPass : CustomPass
 
     // Buffers for filters
     RTHandle newSample;
+    RTHandle temporalFrame;
     RTHandle frameHistory;
     RTHandle finalFrame;
 
@@ -47,6 +49,13 @@ class NanoVolumeCustomPass : CustomPass
             colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
             dimension: TextureXR.dimension,
             name: "Frame_History_Buffer"
+        );
+
+        temporalFrame = RTHandles.Alloc(
+            Vector2.one, TextureXR.slices,
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            dimension: TextureXR.dimension,
+            name: "Temporal_Frame_Buffer"
         );
 
         finalFrame = RTHandles.Alloc(
@@ -82,19 +91,24 @@ class NanoVolumeCustomPass : CustomPass
         // Apply temporal filter
         if (nanoVolumeSettings.TemporalFiltering)
         {
-            // Apply temporal filter (on the spatially filtered buffer)
+            // Apply temporal filter
             ctx.propertyBlock.SetTexture("_NewSample", newSample);
             ctx.propertyBlock.SetTexture("_FrameHistory", frameHistory);
-            ctx.propertyBlock.SetInt("_ActiveSpatialFilter", nanoVolumeSettings.ActiveSpatialFilter);
-            CoreUtils.SetRenderTarget(ctx.cmd, finalFrame, ClearFlag.Color);
+            CoreUtils.SetRenderTarget(ctx.cmd, temporalFrame, ClearFlag.Color);
             CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: TEMPORAL_FILTER_PASS_ID);
 
-            // Save final frame to history
-            ctx.propertyBlock.SetTexture("_FinalFrame", finalFrame);
+            // Save the blended temporal frame to history
+            ctx.propertyBlock.SetTexture("_FrameToHistory", temporalFrame);
             CoreUtils.SetRenderTarget(ctx.cmd, frameHistory, ClearFlag.Color);
             CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: COPY_HISTORY_PASS_ID);
 
-            // Blit temporal filtered frame to camera
+            // Apply spatial filter before showing
+            ctx.propertyBlock.SetInt("_ActiveSpatialFilter", nanoVolumeSettings.ActiveSpatialFilter);
+            ctx.propertyBlock.SetTexture("_BlendedFrame", temporalFrame);
+            CoreUtils.SetRenderTarget(ctx.cmd, finalFrame, ClearFlag.Color);
+            CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: SPATIAL_FILTER_PASS_ID);
+
+            // Blit final filtered frame to camera
             ctx.cmd.Blit(finalFrame, ctx.cameraColorBuffer, new Vector2(scale.x, scale.y), Vector2.zero, 0, 0);
         }
         else
@@ -157,6 +171,7 @@ class NanoVolumeCustomPass : CustomPass
         CoreUtils.Destroy(mat);
         newSample.Release();
         frameHistory.Release();
+        temporalFrame.Release();
         finalFrame.Release();
     }
 }

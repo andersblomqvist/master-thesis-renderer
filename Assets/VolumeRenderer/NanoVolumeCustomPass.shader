@@ -23,10 +23,6 @@ Shader "FullScreen/NanoVolumePass"
         float2 scaling = _RTHandleScale.xy;
         float2 uv = posInput.positionNDC.xy * scaling;
 
-        //float noise = sample_stbn_noise(uv);
-        //float noise = sample_white_noise(uv);
-        //return float4(noise, noise, noise, 1.0);
-
         float3 viewDirection = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
         
         float3 color = CustomPassSampleCameraColor(posInput.positionNDC.xy, 0);
@@ -54,11 +50,26 @@ Shader "FullScreen/NanoVolumePass"
         // Previous pixel uv position
         float2 uv_prev = mul(p_wp, UNITY_MATRIX_PREV_VP).xy * scaling;
 
-        float4 blendedFrame = TemporalPass(uv, uv_prev);
-        return blendedFrame;
+        float4 blended_frame = TemporalPass(uv, uv_prev);
+        return blended_frame;
     }
 
-    TEXTURE2D_X(_FinalFrame);
+    TEXTURE2D_X(_BlendedFrame);
+
+    float4 SpatialFilterPass(Varyings varyings) : SV_Target
+    {
+        UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
+
+        float depth = LoadCameraDepth(varyings.positionCS.xy);
+        PositionInputs posInput = GetPositionInput(varyings.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
+        float2 scaling = _RTHandleScale.xy;
+        float2 uv = posInput.positionNDC.xy * scaling;
+
+        float4 final_frame = SpatialPass(_BlendedFrame, uv);
+        return final_frame;
+    }
+
+    TEXTURE2D_X(_FrameToHistory);
 
     float4 CopyHistoryPass(Varyings varyings) : SV_Target
     {
@@ -68,7 +79,7 @@ Shader "FullScreen/NanoVolumePass"
 
         float2 scaling = _RTHandleScale.xy;
         float2 uv = posInput.positionNDC.xy * scaling;
-        float4 color = SAMPLE_TEXTURE2D_X(_FinalFrame, s_linear_clamp_sampler, uv);
+        float4 color = SAMPLE_TEXTURE2D_X(_FrameToHistory, s_linear_clamp_sampler, uv);
 
         return color;
     }
@@ -108,6 +119,16 @@ Shader "FullScreen/NanoVolumePass"
             HLSLPROGRAM
                 #pragma fragment CopyHistoryPass
             ENDHLSL   
+        }
+
+        Pass // ID 3
+        {
+            Name "Spatial Filter Pass"
+            Cull Off ZWrite Off ZTest Less Blend Off
+
+            HLSLPROGRAM
+                #pragma fragment SpatialFilterPass
+            ENDHLSL
         }
     }
 }

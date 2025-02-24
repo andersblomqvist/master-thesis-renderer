@@ -11,6 +11,7 @@
 TEXTURE2D_ARRAY(_White);
 TEXTURE2D_ARRAY(_Blue);
 TEXTURE2D_ARRAY(_STBN);
+TEXTURE2D_ARRAY(_FAST);
 
 // [0, 63]
 uniform int _Frame;
@@ -67,8 +68,12 @@ float get_noise_from_type(int noise_type, float2 uv)
     }
     else if (noise_type == FAST)
     {
-        // TODO: add fast noise
-        return 0;
+        return SAMPLE_TEXTURE2D_ARRAY(
+            _FAST,
+            s_linear_clamp_sampler,
+            uv,
+            _Frame
+        ).r;
     }
     else if (noise_type == IGN)
     {

@@ -23,6 +23,7 @@ uniform bool	_IsGroundTruth;
 
 // Matches the noise types #define values in NoiseSampler.hlsl. Set to WHITE_NOISE by default.
 uniform int _ActiveNoiseType;
+uniform int _DebugShowNoise;
 
 struct Ray
 {
@@ -238,6 +239,13 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 
 float4 NanoVolumePass(float3 origin, float3 direction, float2 uv)
 {
+	if (_DebugShowNoise == 1)
+	{
+		float noise = sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
+		float4 noise_color = float4(noise, noise, noise, 1.0);
+		return noise_color;
+	}
+
 	NanoVolume volume; init_volume(volume);
 
 	Ray ray;

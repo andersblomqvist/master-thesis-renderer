@@ -131,6 +131,7 @@ class NanoVolumeCustomPass : CustomPass
 
     void SetUniforms(MaterialPropertyBlock mat)
     {
+        mat.SetInt("_DebugShowNoise", nanoVolumeSettings.DebugShowNoise ? 1 : 0);
         mat.SetInt("_IsGroundTruth", 0);
 
         mat.SetBuffer("buf", activeAsset.GetGPUBuffer());
@@ -148,6 +149,7 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetTexture("_White", nanoVolumeSettings.whiteNoise);
         mat.SetTexture("_Blue", nanoVolumeSettings.blueNoise);
         mat.SetTexture("_STBN", nanoVolumeSettings.STBN);
+        mat.SetTexture("_FAST", nanoVolumeSettings.FAST);
         mat.SetInteger("_Frame", frameCount);
     }
 

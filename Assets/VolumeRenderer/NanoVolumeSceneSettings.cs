@@ -23,11 +23,14 @@ public class NanoVolumeSceneSettings : MonoBehaviour
     public Texture2DArray whiteNoise;
     public Texture2DArray blueNoise;
     public Texture2DArray STBN;
+    public Texture2DArray FAST;
 
     [Header("Spatial Filters")]
     public int ActiveSpatialFilter;
 
     public bool TemporalFiltering;
+
+    public bool DebugShowNoise;
 
     NanoVolumeLoader loader;
 
@@ -82,6 +85,11 @@ public class NanoVolumeSceneSettings : MonoBehaviour
     public void ToggleTemporalFiltering()
     {
         TemporalFiltering = !TemporalFiltering;
+    }
+
+    public void ToggleShowNoise()
+    {
+        DebugShowNoise = !DebugShowNoise;
     }
 
     public void SetNoiseType(int id)

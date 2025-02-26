@@ -16,6 +16,8 @@ TEXTURE2D_ARRAY(_FAST);
 // [0, 63]
 uniform int _Frame;
 
+uniform int _DebugSunAngle;
+
 float2 get_tiled_uv(float2 uv)
 {
     float2 screen = _ScreenParams.xy;
@@ -24,16 +26,33 @@ float2 get_tiled_uv(float2 uv)
     return tiled_uv;
 }
 
+/*
+float2 rotate_uv(float2 uv, float2 center, float degrees)
+{
+	float angle = radians(degrees);
+	float2 offset = uv - center;
+	float2 rotated_offset = float2(
+		offset.x * cos(angle) - offset.y * sin(angle),
+		offset.x * sin(angle) + offset.y * cos(angle)
+	);
+	return center + rotated_offset;
+}
+*/
+
 // From  Next Generation Post Processing in Call of Duty: Advanced Warfare [Jimenez 2014]
 // http://advances.realtimerendering.com/s2014/index.html
 float interleaved_gradient_noise(float2 uv, int frame_count)
 {
-    // Convert UV coordinates to clip space pixel coordinates
-    float2 clip_space = uv * _ScreenParams.xy;
-    
+    // NOTE: Just an untested idea
+    // float2 center = float2(0.5, 0.5);
+    // float2 uv_rotated = rotate_uv(uv, center, _DebugSunAngle);
+    // uv = uv_rotated;
+
     const float3 magic = float3(0.06711056f, 0.00583715f, 52.9829189f);
-    float2 frameMagicScale = float2(2.083f, 4.867f);
-    clip_space += frame_count * frameMagicScale;
+    float2 frame_magic_scale = float2(2.083f, 4.867f);
+    float2 clip_space = uv * _ScreenParams.xy;
+
+    clip_space += frame_count * frame_magic_scale;
     return frac(magic.z * frac(dot(clip_space, magic.xy)));
 }
 

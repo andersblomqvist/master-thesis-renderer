@@ -132,6 +132,7 @@ class NanoVolumeCustomPass : CustomPass
 
     void SetUniforms(MaterialPropertyBlock mat)
     {
+        mat.SetInt("_DebugSunAngle", (int)nanoVolumeSettings.sunSlider.value);
         mat.SetInt("_DebugShowNoise", nanoVolumeSettings.DebugShowNoise ? 1 : 0);
         mat.SetInt("_IsGroundTruth", 0);
 

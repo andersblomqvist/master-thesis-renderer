@@ -72,7 +72,7 @@ public class NanoVolumeSceneSettings : MonoBehaviour
 
         sun.transform.rotation = Quaternion.Euler(
             sun.transform.eulerAngles.x, 
-            sunSlider.value, 
+            sunSlider.value,
             sun.transform.eulerAngles.z
         );
     }

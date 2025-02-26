@@ -56,13 +56,13 @@ float4 box_three_filter(TEXTURE2D_X(tex), float2 uv)
 // https://www.shadertoy.com/view/3dd3Wr
 // https://github.com/BrutPitt/glslSmartDeNoise
 #define INV_SQRT_OF_2PI 0.39894228
-float smart_denoise(TEXTURE2D_X(tex), float2 uv)
+float4 smart_denoise(TEXTURE2D_X(tex), float2 uv)
 {
     float sigma = 1.0;
     float k_sigma = 1.0;
 
     // edge sharpening threshold
-    float threshold = 1.0;
+    float threshold = 0.80;
 
     float invSigmaQx2 = 0.5 / (sigma * sigma);
     float invSigmaQx2PI = INV_PI * invSigmaQx2;

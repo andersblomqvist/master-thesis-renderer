@@ -26,24 +26,26 @@ public class SaveImage : MonoBehaviour
         string currentTime = System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         string vdbName = GetVDBName();
 
-        // Each saved image will have a text file with relevant data
-        string metaData = GetSceneProperties(vdbName);
-        string metaPath = Path.Combine(OUTPUT_PATH, vdbName + "_" + currentTime + ".txt");
-        File.WriteAllText(metaPath, metaData);
-
         // Save the image as PNG
-        Texture2D texture = GetCurrentCameraTexture();
-        byte[] imageBytes = texture.EncodeToPNG();
+        Texture2D sample = GetCurrentCameraTexture();
+        byte[] imageBytes = sample.EncodeToPNG();
         string experimentImagePath = Path.Combine(OUTPUT_PATH, vdbName + "_" + currentTime + ".png");
         File.WriteAllBytes(experimentImagePath, imageBytes);
 
         // Also save corresponding ground truth
         settings.ToggleGroundTruth();
-        texture = GetCurrentCameraTexture();
-        imageBytes = texture.EncodeToPNG();
+        Texture2D groundTruth = GetCurrentCameraTexture();
+        imageBytes = groundTruth.EncodeToPNG();
         string groundTruthImagePath = Path.Combine(OUTPUT_PATH, vdbName + "_" + currentTime + "_GT" + ".png");
         File.WriteAllBytes(groundTruthImagePath, imageBytes);
         settings.ToggleGroundTruth();
+
+        float rmse = ComputeRMSE(sample, groundTruth);
+
+        // Each saved image will have a text file with relevant data
+        string metaData = GetSceneProperties(vdbName, rmse);
+        string metaPath = Path.Combine(OUTPUT_PATH, vdbName + "_" + currentTime + ".txt");
+        File.WriteAllText(metaPath, metaData);
 
 #if UNITY_EDITOR
         UnityEditor.AssetDatabase.ImportAsset(metaPath);
@@ -52,7 +54,8 @@ public class SaveImage : MonoBehaviour
         UnityEditor.AssetDatabase.Refresh();
 #endif
         // Clean up
-        Destroy(texture);
+        Destroy(sample);
+        Destroy(groundTruth);
 
         Debug.Log($"Frame saved to: {experimentImagePath}");
     }
@@ -76,7 +79,31 @@ public class SaveImage : MonoBehaviour
         return texture;
     }
 
-    string GetSceneProperties(string vdbName)
+    float ComputeRMSE(Texture2D sample, Texture2D groundTruth)
+    {
+        int width = sample.width;
+        int height = sample.height;
+
+        Color[] pixels1 = sample.GetPixels();
+        Color[] pixels2 = groundTruth.GetPixels();
+
+        float errorSum = 0f;
+        for (int i = 0; i < pixels1.Length; i++)
+        {
+            float rDiff = pixels1[i].r - pixels2[i].r;
+            float gDiff = pixels1[i].g - pixels2[i].g;
+            float bDiff = pixels1[i].b - pixels2[i].b;
+
+            float diffSquared = rDiff * rDiff + gDiff * gDiff + bDiff * bDiff;
+            errorSum += diffSquared;
+        }
+
+        float mse = errorSum / (width * height);
+        float rmse = Mathf.Sqrt(mse);
+        return rmse;
+    }
+
+    string GetSceneProperties(string vdbName, float rmse)
     {
         Vector3 sunRotation = settings.sun.transform.rotation.eulerAngles;
         Vector3 cameraPosition = Camera.main.transform.position;
@@ -98,6 +125,7 @@ public class SaveImage : MonoBehaviour
         sb.AppendLine($"noise,{noiseType}");
         sb.AppendLine($"spatial,{spatialType}");
         sb.AppendLine($"temporal,{temporal}");
+        sb.AppendLine($"rmse,{FloatToString(rmse)}");
 
         return sb.ToString();
     }

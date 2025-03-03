@@ -20,8 +20,7 @@ uniform int _DebugSunAngle;
 
 float2 get_tiled_uv(float2 uv)
 {
-    float2 screen = _ScreenParams.xy;
-    float2 tile_factor = screen / 128.0;
+    float2 tile_factor = _ScreenParams.xy / 128.0;
     float2 tiled_uv = frac(uv * tile_factor);
     return tiled_uv;
 }

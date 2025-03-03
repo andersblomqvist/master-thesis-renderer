@@ -36,12 +36,11 @@ float4 gaussian_blur(TEXTURE2D_X(tex), float2 uv)
 }
 
 // https://en.wikipedia.org/wiki/Box_blur
-float4 box_three_filter(TEXTURE2D_X(tex), float2 uv)
+float4 box_filter(TEXTURE2D_X(tex), float2 uv, int radius)
 {
     float4 result = 0;
     float2 texel_size = float2(1.0 / _ScreenSize.x, 1.0 / _ScreenSize.y);
 
-    int radius = 1;
     for (int y = -radius; y <= radius; y++)
     {
         for (int x = -radius; x <= radius; x++)
@@ -50,7 +49,8 @@ float4 box_three_filter(TEXTURE2D_X(tex), float2 uv)
             result += SAMPLE_TEXTURE2D_X(tex, s_linear_clamp_sampler, uv + offset);
         }
     }
-    return result / 9.0;
+    float box_side = 1 + radius * 2;
+    return result / (box_side * box_side);
 }
 
 // https://www.shadertoy.com/view/3dd3Wr
@@ -111,7 +111,7 @@ float4 SpatialPass(TEXTURE2D_X(tex), float2 uv)
     }
     else if (_ActiveSpatialFilter == BOX)
     {
-        return box_three_filter(tex, uv);
+        return box_filter(tex, uv, 2);
     }
     else if (_ActiveSpatialFilter == EDGE_AWARE)
     {

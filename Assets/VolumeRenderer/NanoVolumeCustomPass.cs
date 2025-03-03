@@ -11,7 +11,7 @@ class NanoVolumeCustomPass : CustomPass
     const int COPY_HISTORY_PASS_ID      = 2;
     const int SPATIAL_FILTER_PASS_ID    = 3;
 
-    const int MAX_FRAME_COUNT = 64;
+    const int MAX_FRAME_COUNT = 32;
 
     public NanoVolumeLoader         nanoVolumeLoaderComponent;
     public NanoVolumeSceneSettings  nanoVolumeSettings;

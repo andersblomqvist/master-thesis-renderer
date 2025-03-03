@@ -132,7 +132,7 @@ public class SaveImage : MonoBehaviour
 
     string FloatToString(float value)
     {
-        return value.ToString("0.0000").Replace(',', '.');
+        return value.ToString("0.00000").Replace(',', '.');
     }
 
     string GetVDBName()

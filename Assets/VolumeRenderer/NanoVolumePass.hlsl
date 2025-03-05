@@ -171,6 +171,8 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 	bool hit = get_hdda_hit(volume.acc, ray, not_used);
 	if (!hit) { return float4(0,0,0,0); }
 
+	ray.tmin += jitter;
+
 	int step = 0;
 	float skip = 0;
 	while (step < 512)

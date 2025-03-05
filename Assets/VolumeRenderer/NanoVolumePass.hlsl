@@ -15,7 +15,6 @@ uniform float	_LightRayLength;
 uniform float	_ClipPlaneMin;
 uniform float	_ClipPlaneMax;
 uniform float   _Density;
-uniform float   _NoiseStrength;
 
 uniform int		_LightStepsSamples;
 
@@ -243,7 +242,7 @@ float4 NanoVolumePass(float3 origin, float3 direction, float2 uv)
 {
 	if (_DebugShowNoise == 1)
 	{
-		float noise = sample_noise(_ActiveNoiseType, uv) * _NoiseStrength;
+		float noise = sample_noise(_ActiveNoiseType, uv);
 		float4 noise_color = float4(noise, noise, noise, 1.0);
 		return noise_color;
 	}

@@ -9,7 +9,6 @@ public class NanoVDBAsset : ScriptableObject
     [Header("Uniform shader vars")]
     public int lightStepsSamples;
     public float density;
-    public float noiseStrength;
 
     [Header("Ground Truth settings")]
     public int gtLightStepsSamples;

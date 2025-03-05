@@ -13,7 +13,7 @@ public class NanoVolumeSceneSettings : MonoBehaviour
     
     public Slider lightStepsSamplesSlider;
     public Slider densitySlider;
-    public Slider noiseStrengthSlider;
+    public Slider frameCountSlider;
     public Slider sunSlider;
 
     public TMP_Text VDBName;
@@ -30,6 +30,8 @@ public class NanoVolumeSceneSettings : MonoBehaviour
 
     public bool TemporalFiltering;
 
+    public int maxFrameCount;
+
     public bool DebugShowNoise;
 
     NanoVolumeLoader loader;
@@ -38,6 +40,7 @@ public class NanoVolumeSceneSettings : MonoBehaviour
     {
         loader = GetComponent<NanoVolumeLoader>();
         activeAssetID = 0;
+        maxFrameCount = 32;
         SetNanoVDBAsset(activeAssetID);
     }
 
@@ -57,12 +60,12 @@ public class NanoVolumeSceneSettings : MonoBehaviour
         activeAsset.density = densitySlider.value;
     }
 
-    public void SetNoiseStrength()
+    public void SetMaxFrameCount()
     {
         if (RenderGroundTruth)
             return;
 
-        activeAsset.noiseStrength = noiseStrengthSlider.value;
+        maxFrameCount = (int)frameCountSlider.value;
     }
 
     public void SetSunAngle()
@@ -109,7 +112,6 @@ public class NanoVolumeSceneSettings : MonoBehaviour
 
         lightStepsSamplesSlider.value = activeAsset.lightStepsSamples;
         densitySlider.value = activeAsset.density;
-        noiseStrengthSlider.value = activeAsset.noiseStrength;
     }
 
     public void LoadNextModel(int direction)

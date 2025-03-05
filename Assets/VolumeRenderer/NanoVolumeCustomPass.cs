@@ -11,8 +11,6 @@ class NanoVolumeCustomPass : CustomPass
     const int COPY_HISTORY_PASS_ID      = 2;
     const int SPATIAL_FILTER_PASS_ID    = 3;
 
-    const int MAX_FRAME_COUNT = 32;
-
     public NanoVolumeLoader         nanoVolumeLoaderComponent;
     public NanoVolumeSceneSettings  nanoVolumeSettings;
 
@@ -29,7 +27,7 @@ class NanoVolumeCustomPass : CustomPass
     RTHandle frameHistory;
     RTHandle finalFrame;
 
-    // Frame count for sampling 3D noise textures [0, 63]
+    // Frame count for sampling 3D noise textures
     int frameCount = 0;
 
     protected override void Setup(ScriptableRenderContext renderContext, CommandBuffer cmd)
@@ -118,7 +116,7 @@ class NanoVolumeCustomPass : CustomPass
             ctx.cmd.Blit(newSample, ctx.cameraColorBuffer, new Vector2(scale.x, scale.y), Vector2.zero, 0, 0);
         }
 
-        frameCount = (frameCount + 1) % MAX_FRAME_COUNT;
+        frameCount = (frameCount + 1) % nanoVolumeSettings.maxFrameCount;
     }
 
     void RenderGroundTruth(CustomPassContext ctx)
@@ -143,7 +141,6 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetVector("_LightDir", nanoVolumeSettings.sun.transform.forward);
 
         mat.SetFloat("_Density", activeAsset.density);
-        mat.SetFloat("_NoiseStrength", activeAsset.noiseStrength);
         mat.SetInt("_LightStepsSamples", activeAsset.lightStepsSamples);
 
         // For NoiseSampler.hlsl include

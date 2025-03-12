@@ -82,19 +82,23 @@ bool get_hdda_hit(inout pnanovdb_readaccessor_t acc, inout Ray ray, inout float 
 	return hit;
 }
 
-void get_participating_media(out float sigmaS, out float sigmaE, float3 pos, inout pnanovdb_readaccessor_t acc)
+void get_participating_media(out float3 d, out float3 sigmaS, out float3 sigmaE, float3 pos, inout pnanovdb_readaccessor_t acc)
 {
-	sigmaS = get_value_coord(acc, pos);
-	sigmaE = max(0.000001, sigmaS);
+	float3 sigmaA = 0.0;
+	sigmaS = normalize(float3(1.0, 1.0, 1.0));
+
+	d = get_value_coord(acc, pos);
+	sigmaE = sigmaA + sigmaS;
 }
 
-float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
+float3 volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 {
 	float3 light_dir = -(_LightDir.xyz);
 
-	float shadow = 1.0;
-	float sigmaS = 0.0;
-	float sigmaE = 0.0;
+	float d = 0.0;
+	float3 shadow = 1.0;
+	float3 sigmaE = 0.0;
+	float3 sigmaS = 0.0;
 	
 	float step_size = 1.0;
 
@@ -103,16 +107,16 @@ float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 	{
 		float3 sample_pos = pos + step_size * jitter * light_dir;
 
-		get_participating_media(sigmaS, sigmaE, sample_pos, acc);
+		get_participating_media(d, sigmaS, sigmaE, sample_pos, acc);
+		sigmaE *= _Density;
 
-		if (sigmaS < MIN_DENSITY)
+		if (d < MIN_DENSITY)
 		{
 			step++;
 			step_size *= 1.6;
 			continue;
 		}
 
-		sigmaE *= _Density;
 		shadow *= exp(-sigmaE * step_size * jitter);
 
 		step++;
@@ -122,13 +126,14 @@ float volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 	return shadow;
 }
 
-float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
+float3 volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
 {
 	float3 light_dir = -(_LightDir.xyz);
 
-	float shadow = 1.0;
-	float sigmaS = 0.0;
-	float sigmaE = 0.0;
+	float d = 0.0;
+	float3 shadow = 1.0;
+	float3 sigmaE = 0.0;
+	float3 sigmaS = 0.0;
 	
 	float step_size = (_LightRayLength / _LightStepsSamples);
 
@@ -136,14 +141,14 @@ float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
 	{
 		float3 sample_pos = pos + t * light_dir;
 
-		get_participating_media(sigmaS, sigmaE, sample_pos, acc);
+		get_participating_media(d, sigmaS, sigmaE, sample_pos, acc);
+		sigmaE *= _Density;
 
-		if (sigmaS < MIN_DENSITY)
+		if (d < MIN_DENSITY)
 		{
 			continue;
 		}
 
-		sigmaE *= _Density;
 		shadow *= exp(-sigmaE * step_size);
 	}
 	
@@ -152,17 +157,17 @@ float volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
 
 float phase_function()
 {
-	return 1.0;
+	return 1.0 / 4.0 * PI;
 }
 
 float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2 uv)
 {
-	float transmittance  = 1.0;
-	float sigmaS         = 0.0;
-	float sigmaE         = 0.0;
-	float acc_density    = 0.0;
-	float3 direct_light  = 0.0;
-	float3 ambient_light = 0.0;
+	float transmittance = 1.0;
+	float acc_density   = 0.0;
+	float d			    = 0.0;
+	float3 sigmaE       = 0.0;
+	float3 sigmaS       = 0.0;
+	float3 direct_light = 0.0;
 
 	float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
 
@@ -183,7 +188,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 
 		// read density from ray position
 		float3 pos = ray.origin + ray.direction * ray.tmin;
-		get_participating_media(sigmaS, sigmaE, pos, volume.acc);
+		get_participating_media(d, sigmaS, sigmaE, pos, volume.acc);
 
 		// Skip empty space.
 		uint dim = get_dim_coord(volume.acc, pos);
@@ -193,16 +198,16 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 			ray.tmin += 10;
 			continue;
 		}
-		if (sigmaS < MIN_DENSITY)
+		if (d < MIN_DENSITY)
 		{
 			step++;
 			ray.tmin += step_size;
 			continue;
 		}
 		
-		acc_density += sigmaS;
+		acc_density += d;
 
-		float S = 0;
+		float3 S = 0;
 		if (_IsGroundTruth)
 		{
 			S = sigmaS * phase_function() * volumetric_shadow_2(pos, volume.acc);
@@ -213,7 +218,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		}
 		float3 Sint = (S - S * exp(-sigmaE * step_size)) / sigmaE;
 		direct_light += transmittance * Sint;
-
+		
 		transmittance *= exp(-sigmaE * step_size);
 
 		if (acc_density > 1.0)
@@ -222,18 +227,11 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 			break;
 		}
 
-		// Early out if no more light is reaching this point
-		if (transmittance < MIN_TRANSMITTANCE)
-		{
-			transmittance = 0;
-			break;
-		}
-
 		step++;
 		ray.tmin += step_size;
 	}
 
-	float3 final_color = direct_light + ambient_light;
+	float3 final_color = direct_light;
 	final_color = pow(final_color, 1.0 / 2.2);
 	return float4(final_color, acc_density);
 }

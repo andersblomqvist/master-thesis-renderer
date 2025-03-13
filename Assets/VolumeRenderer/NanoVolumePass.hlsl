@@ -41,6 +41,16 @@ struct NanoVolume
 	pnanovdb_readaccessor_t acc;
 };
 
+struct Noise
+{
+	float jitter;
+	float white;
+	float blue;
+	float stbn;
+	float fast;
+	float ign;
+};
+
 void init_volume(inout NanoVolume volume)
 {
 	pnanovdb_grid_handle_t  grid        = { {0} };
@@ -93,7 +103,8 @@ void get_participating_media(out float3 d, out float3 sigmaS, out float3 sigmaE,
 	sigmaE = sigmaA + sigmaS;
 }
 
-float3 volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
+// Exponential step size along ray
+float3 volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, Noise noise)
 {
 	float3 light_dir = -(_LightDir.xyz);
 
@@ -107,7 +118,9 @@ float3 volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 	int step = 0;
 	while (step < _LightStepsSamples)
 	{
-		float3 sample_pos = pos + step_size * jitter * light_dir;
+		float3 sample_pos = pos + step_size * light_dir;
+
+		sample_pos += noise.jitter * step_size * light_dir;
 
 		get_participating_media(d, sigmaS, sigmaE, sample_pos, acc);
 		sigmaE *= d * _Density;
@@ -115,19 +128,20 @@ float3 volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 		if (d < MIN_DENSITY)
 		{
 			step++;
-			step_size *= 1.6;
+			step_size *= 2;
 			continue;
 		}
 
-		shadow *= exp(-sigmaE * step_size * jitter);
+		shadow *= exp(-sigmaE * step_size);
 
 		step++;
-		step_size *= 1.6;
+		step_size *= 2;
 	}
 	
 	return shadow;
 }
 
+// Equal step size along ray
 float3 volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
 {
 	float3 light_dir = -(_LightDir.xyz);
@@ -157,9 +171,10 @@ float3 volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
 	return shadow;
 }
 
+// No phase function, not relevant for evaluation
 float phase_function()
 {
-	return 1.0 / 4.0 * PI;
+	return 1.0;
 }
 
 float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2 uv)
@@ -171,18 +186,32 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 	float3 sigmaS       = 0.0;
 	float3 direct_light = 0.0;
 
-	float jitter = 1 + sample_noise(_ActiveNoiseType, uv);
+	// Initialize noise
+	float jitter = sample_noise(_ActiveNoiseType, uv);
+	float ign = sample_noise(IGN, uv);
+	float fast = sample_noise(FAST, uv);
+	float stbn = sample_noise(STBN, uv);
+	float blue = sample_noise(BLUE_NOISE, uv);
+	float white = sample_noise(WHITE_NOISE, uv);
+	Noise noise;
+	noise.jitter = jitter;
+	noise.white = white;
+	noise.blue = blue;
+	noise.stbn = stbn;
+	noise.fast = fast;
+	noise.ign = ign;
 
+	// HDDA First hit
 	float not_used;
 	bool hit = get_hdda_hit(volume.acc, ray, not_used);
 	if (!hit) { return float4(0,0,0,0); }
 
-	ray.tmin += jitter;
-
+	// Raymarch
 	int step = 0;
 	float skip = 0;
 	while (step < 512)
 	{
+		// early out
 		if (ray.tmin >= ray.tmax)
 		{
 			break;
@@ -192,7 +221,7 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		float3 pos = ray.origin + ray.direction * ray.tmin;
 		get_participating_media(d, sigmaS, sigmaE, pos, volume.acc);
 
-		// Skip empty space.
+		// skip empty space
 		uint dim = get_dim_coord(volume.acc, pos);
 		if (dim > 1)
 		{
@@ -209,6 +238,8 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		
 		acc_density += d;
 
+		// Analytical Integration Sebastien Hillaire 2015
+		// https://www.ea.com/frostbite/news/physically-based-unified-volumetric-rendering-in-frostbite
 		float3 S = 0;
 		if (_IsGroundTruth)
 		{
@@ -216,13 +247,15 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 		}
 		else
 		{
-			S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, jitter);
+			S = sigmaS * phase_function() * volumetric_shadow(pos, volume.acc, noise);
 		}
 		float3 Sint = (S - S * exp(-sigmaE * step_size)) / sigmaE;
 		direct_light += transmittance * Sint;
 		
+		// Transmittance function (Beer-Lambert law)
 		transmittance *= exp(-sigmaE * step_size);
 
+		// early out
 		if (acc_density > 1.0)
 		{
 			acc_density = 1.0;
@@ -234,7 +267,10 @@ float4 raymarch_volume(Ray ray, inout NanoVolume volume, float step_size, float2
 	}
 
 	float3 final_color = direct_light;
+
+	// Gamma correction linear to gamma, exposure of 1.0
 	final_color = pow(final_color, 1.0 / 2.2);
+
 	return float4(final_color, acc_density);
 }
 

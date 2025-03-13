@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   volumePath: Assets/dense_cube.nvdb
   lightStepsSamples: 13
-  density: 0.5
-  noiseStrength: 5
+  density: 0.8
   gtLightStepsSamples: 128
   gtLightRayLength: 300
   gtDensity: 1

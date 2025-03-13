@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: wdas_cloud_half
   m_EditorClassIdentifier: 
   volumePath: Assets/wdas_cloud_half.nvdb
-  lightStepsSamples: 14
-  density: 0.025
-  noiseStrength: 1
+  lightStepsSamples: 10
+  density: 0.05
   gtLightStepsSamples: 256
   gtLightRayLength: 600
   gtDensity: 0.05

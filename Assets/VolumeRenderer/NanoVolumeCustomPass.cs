@@ -140,6 +140,8 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetFloat("_ClipPlaneMax", 1500.0f);
 
         mat.SetVector("_LightDir", nanoVolumeSettings.sun.transform.forward);
+        mat.SetColor("_Scattering", nanoVolumeSettings.Scattering);
+        mat.SetFloat("_Absorption", nanoVolumeSettings.Absorption);
 
         mat.SetFloat("_Density", activeAsset.density);
         mat.SetInt("_LightStepsSamples", activeAsset.lightStepsSamples);
@@ -162,6 +164,8 @@ class NanoVolumeCustomPass : CustomPass
         mat.SetFloat("_ClipPlaneMax", 1500.0f);
 
         mat.SetVector("_LightDir", nanoVolumeSettings.sun.transform.forward);
+        mat.SetColor("_Scattering", nanoVolumeSettings.Scattering);
+        mat.SetFloat("_Absorption", nanoVolumeSettings.Absorption);
 
         mat.SetFloat("_Density", activeAsset.gtDensity);
         mat.SetFloat("_LightRayLength", activeAsset.gtLightRayLength);

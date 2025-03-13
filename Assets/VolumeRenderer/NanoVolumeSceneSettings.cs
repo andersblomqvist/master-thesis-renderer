@@ -10,7 +10,9 @@ public class NanoVolumeSceneSettings : MonoBehaviour
     public bool RenderGroundTruth;
 
     public Light sun;
-    
+    public Color Scattering;
+    public float Absorption;
+
     public Slider lightStepsSamplesSlider;
     public Slider densitySlider;
     public Slider frameCountSlider;

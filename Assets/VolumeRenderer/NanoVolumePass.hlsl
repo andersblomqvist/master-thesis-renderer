@@ -10,7 +10,9 @@
 uniform pnanovdb_buf_t buf : register(t1);
 
 uniform float3	_LightDir;  // directionalLight.transform.forward
+uniform float4  _Scattering;
 
+uniform float	_Absorption;
 uniform float	_LightRayLength;
 uniform float	_ClipPlaneMin;
 uniform float	_ClipPlaneMax;
@@ -84,8 +86,8 @@ bool get_hdda_hit(inout pnanovdb_readaccessor_t acc, inout Ray ray, inout float 
 
 void get_participating_media(out float3 d, out float3 sigmaS, out float3 sigmaE, float3 pos, inout pnanovdb_readaccessor_t acc)
 {
-	float3 sigmaA = 0.0;
-	sigmaS = normalize(float3(1.0, 1.0, 1.0));
+	float3 sigmaA = _Absorption;
+	sigmaS = _Scattering;
 
 	d = get_value_coord(acc, pos);
 	sigmaE = sigmaA + sigmaS;
@@ -108,7 +110,7 @@ float3 volumetric_shadow(float3 pos, pnanovdb_readaccessor_t acc, float jitter)
 		float3 sample_pos = pos + step_size * jitter * light_dir;
 
 		get_participating_media(d, sigmaS, sigmaE, sample_pos, acc);
-		sigmaE *= _Density;
+		sigmaE *= d * _Density;
 
 		if (d < MIN_DENSITY)
 		{
@@ -142,7 +144,7 @@ float3 volumetric_shadow_2(float3 pos, pnanovdb_readaccessor_t acc)
 		float3 sample_pos = pos + t * light_dir;
 
 		get_participating_media(d, sigmaS, sigmaE, sample_pos, acc);
-		sigmaE *= _Density;
+		sigmaE *= d * _Density;
 
 		if (d < MIN_DENSITY)
 		{

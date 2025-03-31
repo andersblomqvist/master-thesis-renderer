@@ -7,16 +7,14 @@
 #define FAST        4
 #define IGN         5
 
-// 3D Noise textures of size 128x128 x 64 frames
+// 3D Noise textures of size 128x128 x 32 frames.
+// IGN generated at runtime.
 TEXTURE2D_ARRAY(_White);
 TEXTURE2D_ARRAY(_Blue);
 TEXTURE2D_ARRAY(_STBN);
 TEXTURE2D_ARRAY(_FAST);
 
-// [0, 63]
 uniform int _Frame;
-
-uniform int _DebugSunAngle;
 
 float2 get_tiled_uv(float2 uv)
 {

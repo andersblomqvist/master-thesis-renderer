@@ -1,7 +1,6 @@
 using UnityEngine;
-using UnityEditor;
 
-public class WhiteNoiseGenerator : MonoBehaviour
+public class NoiseGenerator : MonoBehaviour
 {
     public ComputeShader computeShader;
     public int textureSize = 128;
@@ -57,6 +56,8 @@ public class WhiteNoiseGenerator : MonoBehaviour
 
         System.IO.Directory.CreateDirectory("Assets/WhiteNoiseTextures");
         System.IO.File.WriteAllBytes(path, bytes);
-        AssetDatabase.ImportAsset(path);
+#if UNITY_EDITOR
+        UnityEditor.AssetDatabase.ImportAsset(path);
+#endif
     }
 }

@@ -1,0 +1,30 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+uint seed;
+
+uint rand_xorshift(uint seed)
+{
+    // Xorshift algorithm from George Marsaglia's paper
+    seed ^= (seed << 13);
+    seed ^= (seed >> 17);
+    seed ^= (seed << 5);
+    return seed;
+}
+
+float white_noise(uint2 coords, uint seed_offset)
+{
+    uint tmp_seed = coords.x * 1234567 + coords.y * 8912345 + seed + seed_offset;
+    float res = float(rand_xorshift(tmp_seed)) * (1.0 / 4294967296.0);
+    res = float(rand_xorshift(asuint(res))) * (1.0 / 4294967296.0);
+    res = float(rand_xorshift(asuint(res))) * (1.0 / 4294967296.0);
+    res = float(rand_xorshift(asuint(res))) * (1.0 / 4294967296.0);
+    return res;
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint2 id : SV_DispatchThreadID)
+{
+    float value = white_noise(id, id.x * id.y);
+    Result[id] = float4(value, value, value, 1.0);
+}

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2d691d8bba6d61b45972395e8dce1765
+guid: d367e8d3dcc542e4f94039ca5b421e22
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -57,7 +57,7 @@ TextureImporter:
   textureType: 0
   textureShape: 4
   singleChannelComponent: 0
-  flipbookRows: 8
+  flipbookRows: 4
   flipbookColumns: 8
   maxTextureSizeSet: 0
   compressionQualitySet: 0
@@ -71,7 +71,7 @@ TextureImporter:
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: -1
+    textureFormat: 9
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0

@@ -92,7 +92,6 @@ class NanoVolumeCustomPass : CustomPass
             // Apply temporal filter
             ctx.propertyBlock.SetTexture("_NewSample", newSample);
             ctx.propertyBlock.SetTexture("_FrameHistory", frameHistory);
-            // ctx.propertyBlock.SetInt("_ActiveSpatialFilter", nanoVolumeSettings.ActiveSpatialFilter);
             CoreUtils.SetRenderTarget(ctx.cmd, temporalFrame, ClearFlag.Color);
             CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: TEMPORAL_FILTER_PASS_ID);
 

@@ -36,6 +36,8 @@ public class NanoVolumeSceneSettings : MonoBehaviour
 
     public bool DebugShowNoise;
 
+    public bool ExperimentModeHold;
+
     NanoVolumeLoader loader;
 
     void Start()

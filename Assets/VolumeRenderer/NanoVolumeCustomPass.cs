@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
+using System.Configuration;
 
-class NanoVolumeCustomPass : CustomPass
+public class NanoVolumeCustomPass : CustomPass
 {
     // Passes must be in this order in the .shader filer
     const int NANO_VOLUME_PASS_ID       = 0;
@@ -34,34 +35,7 @@ class NanoVolumeCustomPass : CustomPass
     {
         volumeShader = Shader.Find("FullScreen/NanoVolumePass");
         mat = CoreUtils.CreateEngineMaterial(volumeShader);
-        
-        newSample = RTHandles.Alloc(
-            Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
-            dimension: TextureXR.dimension,
-            name: "New_Sample_Buffer"
-        );
-
-        frameHistory = RTHandles.Alloc(
-            Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
-            dimension: TextureXR.dimension,
-            name: "Frame_History_Buffer"
-        );
-
-        temporalFrame = RTHandles.Alloc(
-            Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
-            dimension: TextureXR.dimension,
-            name: "Temporal_Frame_Buffer"
-        );
-
-        finalFrame = RTHandles.Alloc(
-            Vector2.one, TextureXR.slices, 
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
-            dimension: TextureXR.dimension, 
-            name: "Final_Frame_Buffer"
-        );
+        AllocateRTHandles();
     }
 
     protected override void Execute(CustomPassContext ctx)
@@ -85,6 +59,22 @@ class NanoVolumeCustomPass : CustomPass
         // Render latest frame to buffer
         CoreUtils.SetRenderTarget(ctx.cmd, newSample, ClearFlag.Color);
         CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: NANO_VOLUME_PASS_ID);
+
+        // This will prevent accumulation until we start experiment (for scene_1 and 2)
+        // Toggled In DataCollector.cs@PrepareExperiment()
+        if (nanoVolumeSettings.ExperimentModeHold)
+        {
+            // Blit latest sample to camera
+            ctx.cmd.Blit(newSample, ctx.cameraColorBuffer, new Vector2(scale.x, scale.y), Vector2.zero, 0, 0);
+
+            // Save sample to history
+            ctx.propertyBlock.SetTexture("_FrameToHistory", newSample);
+            CoreUtils.SetRenderTarget(ctx.cmd, frameHistory, ClearFlag.Color);
+            CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: COPY_HISTORY_PASS_ID);
+
+            frameCount = 0;
+            return;
+        }
 
         // Apply temporal filter
         if (nanoVolumeSettings.TemporalFiltering)
@@ -177,5 +167,36 @@ class NanoVolumeCustomPass : CustomPass
         frameHistory.Release();
         temporalFrame.Release();
         finalFrame.Release();
+    }
+
+    void AllocateRTHandles()
+    {
+        newSample = RTHandles.Alloc(
+            Vector2.one, TextureXR.slices,
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            dimension: TextureXR.dimension,
+            name: "New_Sample_Buffer"
+        );
+
+        frameHistory = RTHandles.Alloc(
+            Vector2.one, TextureXR.slices,
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            dimension: TextureXR.dimension,
+            name: "Frame_History_Buffer"
+        );
+
+        temporalFrame = RTHandles.Alloc(
+            Vector2.one, TextureXR.slices,
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            dimension: TextureXR.dimension,
+            name: "Temporal_Frame_Buffer"
+        );
+
+        finalFrame = RTHandles.Alloc(
+            Vector2.one, TextureXR.slices, 
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            dimension: TextureXR.dimension, 
+            name: "Final_Frame_Buffer"
+        );
     }
 }

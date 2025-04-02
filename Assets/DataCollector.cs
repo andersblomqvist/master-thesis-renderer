@@ -88,16 +88,25 @@ public class DataCollector : MonoBehaviour
         string file = $"{scene}_{noise}_{temporal}_{spatial}";
         Debug.Log("Experiment finished");
 
-        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Texture2D tex;
+        byte[] imageBytes;
         for (int i = 0; i < MAX_FRAMES; i++)
         {
             string fileName = $"{file}_{i}.png";
             string filePath = Path.Combine(OUTPUT_PATH, fileName);
             tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
             tex.SetPixels(frames.GetPixels(i));
-            byte[] imageBytes = tex.EncodeToPNG();
+            imageBytes = tex.EncodeToPNG();
             File.WriteAllBytes(filePath, imageBytes);
         }
+
+        // Save Ground Truth
+        settings.ToggleGroundTruth();
+        tex = GetCurrentCameraTexture();
+        imageBytes = tex.EncodeToPNG();
+        string groundTruthImagePath = Path.Combine(OUTPUT_PATH, $"{file}_GT.png");
+        File.WriteAllBytes(groundTruthImagePath, imageBytes);
+        settings.ToggleGroundTruth();
 
         Destroy(tex);
     }

@@ -1,11 +1,12 @@
 using System.IO;
-using UnityEditor.Overlays;
 using UnityEngine;
 
 public class DataCollector : MonoBehaviour
 {
     const int MAX_FRAMES = 32;
     const string OUTPUT_PATH = "Assets/Data/";
+
+    const TextureFormat TEXTURE_FORMAT = TextureFormat.R8;
 
     enum NoiseType
     {
@@ -74,7 +75,7 @@ public class DataCollector : MonoBehaviour
 
     public void CollectData()
     {
-        frames = new Texture2DArray(width, height, MAX_FRAMES, TextureFormat.RGBA32, false);
+        frames = new Texture2DArray(width, height, MAX_FRAMES, TEXTURE_FORMAT, false);
 
         PrepareExperiment();
     }
@@ -92,9 +93,13 @@ public class DataCollector : MonoBehaviour
         byte[] imageBytes;
         for (int i = 0; i < MAX_FRAMES; i++)
         {
-            string fileName = $"{file}_{i}.png";
+            string fileName;
+            if (i < 10)
+                fileName = $"{file}_0{i}.png";
+            else
+                fileName = $"{file}_{i}.png";
             string filePath = Path.Combine(OUTPUT_PATH, fileName);
-            tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            tex = new Texture2D(width, height, TEXTURE_FORMAT, false);
             tex.SetPixels(frames.GetPixels(i));
             imageBytes = tex.EncodeToPNG();
             File.WriteAllBytes(filePath, imageBytes);
@@ -121,7 +126,7 @@ public class DataCollector : MonoBehaviour
     Texture2D GetCurrentCameraTexture()
     {
         RenderTexture renderTexture = new RenderTexture(Screen.width, Screen.height, 24);
-        Texture2D texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+        Texture2D texture = new Texture2D(Screen.width, Screen.height, TEXTURE_FORMAT, false);
 
         Camera.main.targetTexture = renderTexture;
         Camera.main.Render();

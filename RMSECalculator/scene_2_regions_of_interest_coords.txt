@@ -1,0 +1,10 @@
+LL = Lower Left corner
+LR = Lower Right corner
+TL = Top Left corner
+TR = Top Right corner
+
+REGION 1
+LL:	(1050, 454)
+LR:	(1177, 454
+TL:	(1050, 327)
+TR:	(1177, 327)

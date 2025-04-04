@@ -5,7 +5,25 @@ import "core:log"
 import "core:math"
 import "core:os"
 import "core:strings"
+import "core:strconv"
 import rl "vendor:raylib"
+
+Region :: struct
+{
+    // top left corner
+    x: int,
+    y: int,
+}
+
+RWIDTH :: 128
+RHEIGHT :: 128
+
+R1S1 :: Region{639, 237}
+R2S1 :: Region{1072, 374}
+R3S1 :: Region{749, 480}
+R4S1 :: Region{1118, 679}
+
+R1S2 :: Region{1050, 327}
 
 normalize_u8_pixel :: proc(pixel: rl.Color) -> [3]f64
 {
@@ -15,13 +33,47 @@ normalize_u8_pixel :: proc(pixel: rl.Color) -> [3]f64
     return [3]f64{r, g, b}
 }
 
-calculate_rmse :: proc(predictions: [^]rl.Color, observation: [^]rl.Color, width, height: i32) -> f64
+get_region_by_id :: proc(region_id: int) -> Region
+{
+    switch region_id
+    {
+        case 1: return R1S1
+        case 2: return R2S1
+        case 3: return R3S1
+        case 4: return R4S1
+        case 5: return R1S2
+    }
+    log.errorf("Invalid region id %d", region_id)
+    return Region{0, 0}
+}
+
+is_pixel_in_region :: proc(x, y, region_id: int) -> bool
+{
+    region := get_region_by_id(region_id)
+    if x >= region.x && x < region.x + RWIDTH && y >= region.y && y < region.y + RHEIGHT
+    {
+        return true
+    }
+    return false
+}
+
+calculate_rmse :: proc(predictions: [^]rl.Color, observation: [^]rl.Color, width, height, region_id: int) -> f64
 {
     sum: f64 = 0.0
-    for y:i32 = 0; y < height; y += 1
+    n := 0
+    for y: = 0; y < height; y += 1
     {
-        for x:i32 = 0; x < width; x += 1
+        for x: = 0; x < width; x += 1
         {
+            if (region_id != 0)
+            {
+                if !is_pixel_in_region(x, y, region_id)
+                {
+                    // pixel is not within the region, so skip calculate RMSE
+                    continue
+                }
+            }
+
             pxy := predictions[y * width + x]
             oxy := observation[y * width + x]
 
@@ -32,11 +84,13 @@ calculate_rmse :: proc(predictions: [^]rl.Color, observation: [^]rl.Color, width
             // textures are in R8 format
             diff := npxy.r - noxy.r
             diff_squared := diff * diff
+
             sum += diff_squared
+            n += 1
         }
     }
 
-    mse: f64 = sum / f64(width * height)
+    mse: f64 = sum / f64(n)
     return math.sqrt_f64(mse)
 }
 
@@ -112,11 +166,18 @@ main :: proc()
     rl.InitWindow(800, 600, "RMSE Calculator")
     defer rl.CloseWindow()
 
+    region_id := 0
+
     log.infof("%v", os.args)
     if len(os.args) < 2
     {
-        log.error("Usage: rmse path/to/folder>")
+        log.error("Usage: rmse path/to/folder <region>")
         return
+    }
+    else if len(os.args) == 3
+    {
+        region_id = strconv.atoi(os.args[2])
+        log.infof("Region ID: %d", region_id)
     }
 
     directory: string = os.args[1]
@@ -142,8 +203,8 @@ main :: proc()
         return
     }
     
-    width := prediction.width
-    height := prediction.height
+    width := int(prediction.width)
+    height := int(prediction.height)
     
     // Raylib assume a color is 4 components, R8G8B8A8 (32bit)
     // We only need to consider the R channel
@@ -156,14 +217,20 @@ main :: proc()
     for i := 0; i < len(observations); i += 1
     {
         observation_pixels := rl.LoadImageColors(observations[i])
-        rmse: f64 = calculate_rmse(prediction_pixels, observation_pixels, width, height)
+        rmse: f64 = calculate_rmse(prediction_pixels, observation_pixels, width, height, region_id)
         log.infof("RMSE for %d: %.5f", i, rmse)
         
         fmt.sbprintf(&result, "%d,%.5f\n", i, rmse)
     }
     
     filepath := strings.builder_make()
+
+    // takes exiting image name but removes "_00.png"
     filename, ok := strings.substring(fi[0].name, 0, len(fi[0].name) - 7)
+
+    // append region id if specified
+    if region_id != 0 { filename = strings.concatenate({filename, "_region_", os.args[2]}) }
+
     filename = strings.concatenate({filename, ".txt"})
     strings.write_string(&filepath, directory)
     strings.write_string(&filepath, "\\")

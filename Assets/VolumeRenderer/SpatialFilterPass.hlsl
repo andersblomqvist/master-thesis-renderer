@@ -106,50 +106,6 @@ float4 binomial_filter_5x5(TEXTURE2D_X(tex), float2 uv)
     return result / 256.0;
 }
 
-// https://www.shadertoy.com/view/3dd3Wr
-// https://github.com/BrutPitt/glslSmartDeNoise
-#define INV_SQRT_OF_2PI 0.39894228
-float4 smart_denoise(TEXTURE2D_X(tex), float2 uv)
-{
-    float sigma = 1.0;
-    float k_sigma = 1.0;
-
-    // edge sharpening threshold
-    float threshold = 0.80;
-
-    float invSigmaQx2 = 0.5 / (sigma * sigma);
-    float invSigmaQx2PI = INV_PI * invSigmaQx2;
-    float invThresholdSqx2 = 0.5 / (threshold * threshold);
-    float invThresholdSqrt2PI = INV_SQRT_OF_2PI / threshold;
-
-    float4 center_pixel_color = SAMPLE_TEXTURE2D_X(tex, s_linear_clamp_sampler, uv);
-
-    float z_buff = 0;
-    float4 a_buff = 0;
-    float2 size = _ScreenSize.xy;
-
-    float radius = round(k_sigma * sigma);
-    for (float x = -radius; x <= radius; x++) {
-
-        float pt = sqrt(radius * radius - x * x);
-        for (float y = -pt; y <= pt; y++) {
-
-            float2 d = float2(x, y);
-            float blur_factor = exp(-dot(d , d) * invSigmaQx2) * invSigmaQx2PI; 
-            
-            float4 offset_pixel_color =  SAMPLE_TEXTURE2D_X(tex, s_linear_clamp_sampler, uv + d / size);
-
-            float4 dc = offset_pixel_color - center_pixel_color;
-            float delta_factor = exp(-dot(dc, dc) * invThresholdSqx2) * invThresholdSqrt2PI * blur_factor;
-                                 
-            z_buff += delta_factor;
-            a_buff += delta_factor * offset_pixel_color;
-        }
-    }
-
-    return a_buff/z_buff;
-}
-
 float4 unfiltered(TEXTURE2D_X(tex), float2 uv)
 {
     float4 color = SAMPLE_TEXTURE2D_X(tex, s_linear_clamp_sampler, uv);

@@ -44,7 +44,6 @@ public class NanoVolumeSceneSettings : MonoBehaviour
     {
         loader = GetComponent<NanoVolumeLoader>();
         activeAssetID = 0;
-        maxFrameCount = 32;
         SetNanoVDBAsset(activeAssetID);
     }
 

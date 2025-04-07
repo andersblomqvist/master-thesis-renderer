@@ -26,7 +26,7 @@ static const int binomial_kernel_3x3[3][3] = {
 };
 
 // 5x5 Binomial kernel (normalize by dividing by 256)
-static const float binomial_kernel_5x5[5][5] = {
+static const int binomial_kernel_5x5[5][5] = {
     { 1,  4,  6,  4, 1 },
     { 4, 16, 24, 16, 4 },
     { 6, 24, 36, 24, 6 },

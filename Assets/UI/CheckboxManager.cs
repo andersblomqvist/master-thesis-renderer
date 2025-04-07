@@ -15,6 +15,8 @@ public class CheckboxManager : MonoBehaviour
     public Toggle spFilter2;
     public Toggle spFilter3;
     public Toggle spFilter4;
+    public Toggle spFilter5;
+    public Toggle spFilter6;
 
     void Start()
     {
@@ -39,5 +41,7 @@ public class CheckboxManager : MonoBehaviour
         spFilter2.isOn = id == 2;
         spFilter3.isOn = id == 3;
         spFilter4.isOn = id == 4;
+        spFilter5.isOn = id == 5;
+        spFilter6.isOn = id == 6;
     }
 }

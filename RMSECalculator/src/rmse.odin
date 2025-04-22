@@ -25,12 +25,12 @@ R4S1 :: Region{1118, 679}
 
 R1S2 :: Region{1050, 327}
 
-normalize_u8_pixel :: proc(pixel: rl.Color) -> [3]f64
+normalize_u8_pixel :: proc(pixel: rl.Color) -> [3]f32
 {
-    r: f64 = f64(pixel.r) / 255.0
-    g: f64 = f64(pixel.g) / 255.0
-    b: f64 = f64(pixel.b) / 255.0
-    return [3]f64{r, g, b}
+    r: f32 = f32(pixel.r) / 255.0
+    g: f32 = f32(pixel.g) / 255.0
+    b: f32 = f32(pixel.b) / 255.0
+    return [3]f32{r, g, b}
 }
 
 get_region_by_id :: proc(region_id: int) -> Region
@@ -57,9 +57,9 @@ is_pixel_in_region :: proc(x, y, region_id: int) -> bool
     return false
 }
 
-calculate_rmse :: proc(predictions: [^]rl.Color, observation: [^]rl.Color, width, height, region_id: int) -> f64
+calculate_rmse :: proc(predictions: [^]rl.Color, observation: [^]rl.Color, width, height, region_id: int) -> f32
 {
-    sum: f64 = 0.0
+    sum: f32 = 0.0
     n := 0
     for y: = 0; y < height; y += 1
     {
@@ -78,8 +78,8 @@ calculate_rmse :: proc(predictions: [^]rl.Color, observation: [^]rl.Color, width
             oxy := observation[y * width + x]
 
             // normalize the pixel values to [0, 1]
-            npxy: [3]f64 = normalize_u8_pixel(pxy)
-            noxy: [3]f64 = normalize_u8_pixel(oxy)
+            npxy: [3]f32 = normalize_u8_pixel(pxy)
+            noxy: [3]f32 = normalize_u8_pixel(oxy)
 
             // textures are in R8 format
             diff := npxy.r - noxy.r
@@ -90,8 +90,8 @@ calculate_rmse :: proc(predictions: [^]rl.Color, observation: [^]rl.Color, width
         }
     }
 
-    mse: f64 = sum / f64(n)
-    return math.sqrt_f64(mse)
+    mse: f32 = sum / f32(n)
+    return math.sqrt_f32(mse)
 }
 
 read_files :: proc (directory: string) -> (fi: []os.File_Info, err: os.Error)
@@ -143,6 +143,7 @@ load_data :: proc(fi: []os.File_Info) -> (observations: [32]rl.Image, prediction
             prediction = image
             continue
         }
+        log.infof("[%d] Loading %s", i, fi[i].name)
         observations[i] = image
     }
 
@@ -217,7 +218,7 @@ main :: proc()
     for i := 0; i < len(observations); i += 1
     {
         observation_pixels := rl.LoadImageColors(observations[i])
-        rmse: f64 = calculate_rmse(prediction_pixels, observation_pixels, width, height, region_id)
+        rmse: f32 = calculate_rmse(prediction_pixels, observation_pixels, width, height, region_id)
         log.infof("RMSE for %d: %.5f", i, rmse)
         
         fmt.sbprintf(&result, "%d,%.5f\n", i, rmse)

@@ -24,6 +24,10 @@ Built using Unity 6000.0.34f1 and DirectX 12. The renderer is divided into three
 
 Each pass renders to a texture, which will be used by the next pass in line. The random offset (jitter) is applied in the Volume Pass at [line 142](https://github.com/andersblomqvist/master-thesis-renderer/blob/main/Assets/VolumeRenderer/NanoVolumePass.hlsl#L142). The jitter variable samples either precomputed noise textures or generate it during runtime. The sampling is done in [NoiseSampler.hlsl](https://github.com/andersblomqvist/master-thesis-renderer/blob/main/Assets/VolumeRenderer/NoiseSampler.hlsl).
 
+## Data
+
+All data is found under the [RMSECalculator](https://github.com/andersblomqvist/master-thesis-renderer/tree/main/RMSECalculator) folder, see RQ1 and RQ2 folders.
+
 ## Acknowledgements
 
 TBA

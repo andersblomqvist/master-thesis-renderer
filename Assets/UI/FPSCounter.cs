@@ -5,7 +5,7 @@ public class FPSCounter : MonoBehaviour
     TMPro.TMP_Text avgfpsText;
 
     float avgFrameTime = 0.0f;
-    int lastNumberOfFrames = 60;
+    int lastNumberOfFrames = 600;
 
     void Start()
     {

@@ -1,0 +1,7 @@
+noise,fps
+nonoise,230
+white,212
+blue,211
+IGN,211
+STBN,211
+FAST,211

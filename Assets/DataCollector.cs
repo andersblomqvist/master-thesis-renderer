@@ -27,6 +27,7 @@ public class DataCollector : MonoBehaviour
         Binom5x5 = 6,
     }
 
+
     public GameObject volumeRenderer;
     NanoVolumeSceneSettings settings;
 
@@ -36,10 +37,13 @@ public class DataCollector : MonoBehaviour
     int width;
     int height;
 
+    [Header("Optinal")]
+    public Texture2D groundTruth;
+
     void Start()
     {
         settings = volumeRenderer.GetComponent<NanoVolumeSceneSettings>();
-        settings.ExperimentModeHold = true;
+        //settings.ExperimentModeHold = true;
         width = Screen.width;
         height = Screen.height;
 
@@ -64,11 +68,17 @@ public class DataCollector : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Frame {frame} saved to array");
+        // Debug.Log($"Frame {frame} saved to array");
 
         // Save the current frame to the array
         Texture2D currentFrame = GetCurrentCameraTexture();
         SaveFrameToArray(currentFrame, frame);
+
+        if (groundTruth != null)
+        {
+            double rmse = CalculateRMSE(currentFrame, groundTruth);
+            Debug.Log($"[{frame}] RMSE: {rmse}");
+        }
 
         frame++;
     }
@@ -78,6 +88,30 @@ public class DataCollector : MonoBehaviour
         frames = new Texture2DArray(width, height, MAX_FRAMES, TEXTURE_FORMAT, false);
 
         PrepareExperiment();
+    }
+
+    double CalculateRMSE(Texture2D currentFrame, Texture2D groundTruth)
+    {
+        if (currentFrame.width != groundTruth.width || currentFrame.height != groundTruth.height)
+        {
+            Debug.LogError("Texture dimensions do not match for RMSE calculation. " +
+                           $"Current: {currentFrame.width}x{currentFrame.height}, " +
+                           $"Ground Truth: {groundTruth.width}x{groundTruth.height}");
+            return -1;
+        }
+
+        Color[] currentPixels = currentFrame.GetPixels();
+        Color[] groundTruthPixels = groundTruth.GetPixels();
+
+        double sumSquaredError = 0.0;
+        for (int i = 0; i < currentPixels.Length; i++)
+        {
+            float error = currentPixels[i].r - groundTruthPixels[i].r;
+            sumSquaredError += error * error;
+        }
+
+        double meanSquaredError = sumSquaredError / currentPixels.Length;
+        return Mathf.Sqrt((float)meanSquaredError);
     }
 
     void SaveData()

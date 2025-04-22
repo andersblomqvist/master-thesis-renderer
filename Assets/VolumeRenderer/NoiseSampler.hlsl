@@ -1,6 +1,7 @@
 #ifndef NOISE_SAMPLER
 #define NOISE_SAMPLER
 
+#define NO_NOISE    0
 #define WHITE_NOISE 1
 #define BLUE_NOISE  2
 #define STBN        3
@@ -37,7 +38,11 @@ float interleaved_gradient_noise(float2 uv, int frame_count)
 
 float get_noise_from_type(int noise_type, float2 uv)
 {
-    if (noise_type == WHITE_NOISE)
+    if (noise_type == NO_NOISE)
+    {
+        return 1;
+    }
+    else if (noise_type == WHITE_NOISE)
     {
         return SAMPLE_TEXTURE2D_ARRAY(
             _White,
@@ -77,7 +82,7 @@ float get_noise_from_type(int noise_type, float2 uv)
     {
         return interleaved_gradient_noise(uv, _Frame);
     }
-    else return 0;
+    else return 1;
 }
 
 float sample_noise(int noise_type, float2 uv)

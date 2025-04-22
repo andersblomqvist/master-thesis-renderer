@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,6 +6,7 @@ public class CheckboxManager : MonoBehaviour
 {
     public NanoVolumeSceneSettings settings;
 
+    public Toggle noise0;
     public Toggle noise1;
     public Toggle noise2;
     public Toggle noise3;
@@ -27,6 +29,7 @@ public class CheckboxManager : MonoBehaviour
     public void ToggleNoiseType(int id)
     {
         settings.SetNoiseType(id);
+        noise0.isOn = id == 0;
         noise1.isOn = id == 1;
         noise2.isOn = id == 2;
         noise3.isOn = id == 3;

@@ -12,7 +12,7 @@ Randomly offseting samples based on FAST noise optimized towards an Exponential 
 
 ![fast_ema_binom3x3](https://github.com/andersblomqvist/master-thesis-renderer/blob/main/RMSECalculator/RQ2/scene_1_real_uniform_binomial3x3_exp0101_separate05_ema_binom3x3/scene_1_real_uniform_binomial3x3_exp0101_separate05_ema_binom3x3_31.png)
 
-Screenshot of the Disney Moana Cloud rendered at 211 FPS (4.7 ms) using 10 light samples on RTX 3080 at stock speeds. Jitter is using FAST noise optimized towards EMA and binomial 3x3 filters.
+Screenshot of the Disney Moana Cloud rendered at 211 FPS (4.7 ms) 1920x1080 using 10 light samples on RTX 3080 at stock speeds. Jitter is using FAST noise optimized towards EMA and binomial 3x3 filters.
 
 ## Implementation
 

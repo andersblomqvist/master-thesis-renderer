@@ -38,6 +38,8 @@ public class NanoVolumeSceneSettings : MonoBehaviour
 
     public bool ExperimentModeHold;
 
+    public bool EnableRenderPass;
+
     NanoVolumeLoader loader;
 
     void Start()

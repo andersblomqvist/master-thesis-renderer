@@ -43,7 +43,6 @@ public class DataCollector : MonoBehaviour
     void Start()
     {
         settings = volumeRenderer.GetComponent<NanoVolumeSceneSettings>();
-        //settings.ExperimentModeHold = true;
         width = Screen.width;
         height = Screen.height;
 
@@ -68,8 +67,6 @@ public class DataCollector : MonoBehaviour
             return;
         }
 
-        // Debug.Log($"Frame {frame} saved to array");
-
         // Save the current frame to the array
         Texture2D currentFrame = GetCurrentCameraTexture();
         SaveFrameToArray(currentFrame, frame);
@@ -78,6 +75,10 @@ public class DataCollector : MonoBehaviour
         {
             double rmse = CalculateRMSE(currentFrame, groundTruth);
             Debug.Log($"[{frame}] RMSE: {rmse}");
+        }
+        else
+        {
+            Debug.Log($"Frame {frame} saved to array");
         }
 
         frame++;
@@ -159,11 +160,14 @@ public class DataCollector : MonoBehaviour
 
     Texture2D GetCurrentCameraTexture()
     {
-        RenderTexture renderTexture = new RenderTexture(Screen.width, Screen.height, 24);
+        RenderTexture renderTexture = new RenderTexture(Screen.width, Screen.height, 0);
         Texture2D texture = new Texture2D(Screen.width, Screen.height, TEXTURE_FORMAT, false);
 
+        Debug.Log($"Saving camera texture for frame {frame}");
+        settings.EnableRenderPass = true;
         Camera.main.targetTexture = renderTexture;
         Camera.main.Render();
+        settings.EnableRenderPass = false;
 
         RenderTexture.active = renderTexture;
         texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);

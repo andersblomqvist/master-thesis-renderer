@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
-using System.Configuration;
 
 public class NanoVolumeCustomPass : CustomPass
 {
@@ -73,6 +72,11 @@ public class NanoVolumeCustomPass : CustomPass
             CoreUtils.DrawFullScreen(ctx.cmd, mat, ctx.propertyBlock, shaderPassId: COPY_HISTORY_PASS_ID);
 
             frameCount = 0;
+            return;
+        }
+
+        if (nanoVolumeSettings.EnableRenderPass == false)
+        {
             return;
         }
 
@@ -173,28 +177,28 @@ public class NanoVolumeCustomPass : CustomPass
     {
         newSample = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
             dimension: TextureXR.dimension,
             name: "New_Sample_Buffer"
         );
 
         frameHistory = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
             dimension: TextureXR.dimension,
             name: "Frame_History_Buffer"
         );
 
         temporalFrame = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
             dimension: TextureXR.dimension,
             name: "Temporal_Frame_Buffer"
         );
 
         finalFrame = RTHandles.Alloc(
             Vector2.one, TextureXR.slices, 
-            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
+            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
             dimension: TextureXR.dimension, 
             name: "Final_Frame_Buffer"
         );

@@ -177,28 +177,28 @@ public class NanoVolumeCustomPass : CustomPass
     {
         newSample = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
             dimension: TextureXR.dimension,
             name: "New_Sample_Buffer"
         );
 
         frameHistory = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
             dimension: TextureXR.dimension,
             name: "Frame_History_Buffer"
         );
 
         temporalFrame = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
             dimension: TextureXR.dimension,
             name: "Temporal_Frame_Buffer"
         );
 
         finalFrame = RTHandles.Alloc(
             Vector2.one, TextureXR.slices, 
-            colorFormat: GraphicsFormat.R8G8B8A8_SRGB, 
+            colorFormat: GraphicsFormat.R16G16B16A16_SFloat, 
             dimension: TextureXR.dimension, 
             name: "Final_Frame_Buffer"
         );

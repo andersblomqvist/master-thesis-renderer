@@ -164,10 +164,10 @@ public class DataCollector : MonoBehaviour
         Texture2D texture = new Texture2D(Screen.width, Screen.height, TEXTURE_FORMAT, false);
 
         Debug.Log($"Saving camera texture for frame {frame}");
-        settings.EnableRenderPass = true;
+        //settings.EnableRenderPass = true;
         Camera.main.targetTexture = renderTexture;
         Camera.main.Render();
-        settings.EnableRenderPass = false;
+        //settings.EnableRenderPass = false;
 
         RenderTexture.active = renderTexture;
         texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
@@ -188,7 +188,10 @@ public class DataCollector : MonoBehaviour
 
     string GetTemporalFilterName()
     {
-        return "ema";
+        if (settings.IsUsingUnityTAA)
+            return "unity_taa";
+        else
+            return "ema";
     }
 
     string GetNoiseNameByType(int type)

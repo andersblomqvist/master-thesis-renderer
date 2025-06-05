@@ -40,6 +40,8 @@ public class NanoVolumeSceneSettings : MonoBehaviour
 
     public bool EnableRenderPass;
 
+    public bool IsUsingUnityTAA;
+
     NanoVolumeLoader loader;
 
     void Start()

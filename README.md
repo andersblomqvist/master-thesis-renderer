@@ -8,7 +8,7 @@ The thesis focuses on optimizing light samples for large volumetric clouds, such
 
 ## Showcase
 
-Randomly offseting samples based on FAST noise optimized towards an Exponential Moving Average (EMA) temporal filter and a Binomial 3x3 spatial filter gave the best results (no color banding and lowest amount of noise), see screenshot below. All details are found in the report pdf, which is available at: [TBA](https://www.google.com)
+Randomly offseting samples based on FAST noise optimized towards an Exponential Moving Average (EMA) temporal filter and a Binomial 3x3 spatial filter gave the best results (no color banding and lowest amount of noise), see screenshot below. All details are found in the report pdf, which is available at: [In this repo](https://github.com/andersblomqvist/master-thesis-renderer/blob/main/Blomqvist_Anders_Thesis.pdf)
 
 ![fast_ema_binom3x3](https://github.com/andersblomqvist/master-thesis-renderer/blob/main/RMSECalculator/RQ2/scene_1_real_uniform_binomial3x3_exp0101_separate05_ema_binom3x3/scene_1_real_uniform_binomial3x3_exp0101_separate05_ema_binom3x3_31.png)
 
@@ -30,4 +30,23 @@ All data is found under the [RMSECalculator](https://github.com/andersblomqvist/
 
 ## Acknowledgements
 
-TBA
+There are many people who have been supportive throughout my studies and
+during the work of this thesis. I would specifically like to thank the following
+people:
+
+* Christopher Peters, my supervisor at KTH, for providing me with great
+feedback and guidance throughout the project. He has also held some
+of the most interesting courses where I got introduced to the topic of
+volumetric clouds.
+* Tino Weinkauf, my examiner at KTH, for good discussions and also
+great courses, where one laid the foundational work of this thesis.
+* KTH VIC Studio, for creating an open and friendly environment where
+you as a student can try things on your own and not be afraid of failing.
+Learn by doing.
+* Sebastian Gaida, for sharing his Master’s Thesis on OpenVDB
+rendering for real-time purposes.
+* Alan Wolfe, EA SEED, for some helpful guidance and also great
+resources available online at his blog: [blog.demofox.org](https://blog.demofox.org/).
+
+Stockholm, June 2025
+Anders Blomqvist

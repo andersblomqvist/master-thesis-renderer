@@ -8,7 +8,7 @@ The thesis focuses on optimizing light samples for large volumetric clouds, such
 
 ## Showcase
 
-Randomly offseting samples based on FAST noise optimized towards an Exponential Moving Average (EMA) temporal filter and a Binomial 3x3 spatial filter gave the best results (no color banding and lowest amount of noise), see screenshot below. All details are found in the report pdf, which is available at: [In this repo](https://github.com/andersblomqvist/master-thesis-renderer/blob/main/Blomqvist_Anders_Thesis.pdf)
+Randomly offseting samples based on FAST noise optimized towards an Exponential Moving Average (EMA) temporal filter and a Binomial 3x3 spatial filter gave the best results (no color banding and lowest amount of noise), see screenshot below. All details are found in the report pdf, which is available at: [KTH Diva Portal](https://kth.diva-portal.org/smash/record.jsf?pid=diva2:1986323)
 
 ![fast_ema_binom3x3](https://github.com/andersblomqvist/master-thesis-renderer/blob/main/RMSECalculator/RQ2/scene_1_real_uniform_binomial3x3_exp0101_separate05_ema_binom3x3/scene_1_real_uniform_binomial3x3_exp0101_separate05_ema_binom3x3_31.png)
 

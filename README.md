@@ -1,4 +1,4 @@
-# Master's Thesis Renderer
+# Optimizing Light Samples for Real-Time Volumetric Clouds
 
 This repository is a continuation of my [Unity NanoVDB Renderer](https://github.com/andersblomqvist/unity-nanovdb-renderer) and includes the implementation, evaluation, and all of the data for my master's thesis.
 
